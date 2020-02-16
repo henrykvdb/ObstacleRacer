@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.Vector2
+import com.badlogic.gdx.utils.TimeUtils
 import kotlin.math.min
 
 class DropperCore : ApplicationAdapter() {
@@ -22,7 +23,7 @@ class DropperCore : ApplicationAdapter() {
 	}
 
 	override fun render() {
-		Gdx.gl.glClearColor(1f, 0f, 0f, 1f)
+		Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f)
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
 		Gdx.gl.glLineWidth(5f)
 
@@ -30,9 +31,10 @@ class DropperCore : ApplicationAdapter() {
 		val touch = Vector2(Gdx.input.x.toFloat(), Gdx.input.y.toFloat())
 
 		//Clip touch
-		var clippedTouch = touch.sub(center)
-		if (clippedTouch.len() > frontRadius) clippedTouch.scl(frontRadius / clippedTouch.len())
-		clippedTouch = clippedTouch.add(center)
+		val clippedTouch = touch.sub(center)
+		if (clippedTouch.len() > frontRadius)
+			clippedTouch.scl(frontRadius / clippedTouch.len())
+		clippedTouch.add(center)
 
 		//Update camera position
 		val percentX = clippedTouch.x / Gdx.graphics.width
@@ -55,10 +57,26 @@ class DropperCore : ApplicationAdapter() {
 		renderer.end()
 
 		//Rings
-		renderer.begin(ShapeRenderer.ShapeType.Line)
-		renderer.color = Color.BLUE
-		renderer.circle(Gdx.graphics.width / 2.toFloat(), Gdx.graphics.height / 2.toFloat(), 128f)
-		renderer.end()
+		if(TimeUtils.nanoTime() - lastSpawnTime > 1000000000) spawnRing()
+
+		for (ring in rings) {
+			renderer.begin(ShapeRenderer.ShapeType.Line)
+			renderer.color = Color.BLUE
+			renderer.circle(Gdx.graphics.width / 2.toFloat(), Gdx.graphics.height / 2.toFloat(), ring)
+			renderer.end()
+		}
+
+		rings = (rings.map { it + 100f*Gdx.graphics.deltaTime })
+				.filter { it<=frontRadius }.toMutableList()
+		//TODO filter -> collision check & filter
+	}
+
+	private var rings = mutableListOf<Float>()
+	private var lastSpawnTime = 0L
+
+	private fun spawnRing() {
+		rings.add(20f)
+		lastSpawnTime = TimeUtils.nanoTime()
 	}
 
 	override fun dispose() {
