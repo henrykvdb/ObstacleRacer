@@ -7,7 +7,7 @@ import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
-import com.badlogic.gdx.math.Vector2
+import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.TimeUtils
 import kotlin.math.min
 
@@ -20,7 +20,7 @@ class DropperCore : ApplicationAdapter() {
     override fun create() {
         cam = OrthographicCamera()
         cam.setToOrtho(false, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
-        cam.zoom = 1f/min(Gdx.graphics.width, Gdx.graphics.height)
+        cam.zoom = 1f / min(Gdx.graphics.width, Gdx.graphics.height)
         cam.position.x = 0f
         cam.position.y = 0f
         cam.update()
@@ -34,13 +34,10 @@ class DropperCore : ApplicationAdapter() {
         Gdx.gl.glLineWidth(5f)
 
         //Update camera
-        val vertical = Gdx.graphics.height > Gdx.graphics.width
-        val aspRatio = Gdx.graphics.height.toFloat() / Gdx.graphics.width
-        val inX = (-1f + 2 * Gdx.input.x.toFloat() / Gdx.graphics.width) * (if (vertical) 1f else 1/aspRatio)
-        val inY = (1f - 2 * Gdx.input.y.toFloat() / Gdx.graphics.height) * (if (vertical) aspRatio else 1f)
-        val input = Vector2(inX,inY).clamp(0f,1f)
-        cam.position.x = input.x/2
-        cam.position.y = input.y/2
+        val input = cam.unproject(Vector3(Gdx.input.x.toFloat(), Gdx.input.y.toFloat(), 0f))
+        input.clamp(0f, 1f)
+        cam.position.x = input.x / 2
+        cam.position.y = input.y / 2
         cam.update()
         renderer.projectionMatrix = cam.combined
 
