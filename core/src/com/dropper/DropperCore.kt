@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
+import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.Vector3
@@ -16,6 +17,8 @@ class DropperCore : ApplicationAdapter() {
     private lateinit var cam: OrthographicCamera
     private lateinit var renderer: ShapeRenderer
     private lateinit var batch: SpriteBatch
+    private lateinit var tGate: Texture
+    private lateinit var tCircle: Texture
 
     override fun create() {
         cam = OrthographicCamera()
@@ -26,6 +29,8 @@ class DropperCore : ApplicationAdapter() {
         cam.update()
         renderer = ShapeRenderer()
         batch = SpriteBatch()
+        tGate = Texture(Gdx.files.internal("gate1.png"))
+        tCircle = Texture(Gdx.files.internal("circle.png"))
     }
 
     override fun render() {
@@ -40,31 +45,32 @@ class DropperCore : ApplicationAdapter() {
         cam.position.y = input.y / 2
         cam.update()
         renderer.projectionMatrix = cam.combined
+        batch.projectionMatrix = cam.combined
 
-        //Front circle
-        renderer.begin(ShapeRenderer.ShapeType.Filled)
-        renderer.color = Color.GREEN
-        renderer.circle(0f, 0f, 1f)
-        renderer.end()
-
-        //Position dot
-        renderer.begin(ShapeRenderer.ShapeType.Filled)
-        renderer.color = Color.RED
-        renderer.circle(input.x, input.y, 0.2f)
-        renderer.end()
+        //Back circle
+        batch.begin()
+        batch.color = Color.WHITE
+        batch.draw(tCircle, -1f, -1f, 2f, 2f)
+        batch.end()
 
         //Rings
-        if (TimeUtils.nanoTime() - lastSpawnTime > 1500000000) spawnRing()
+        if (TimeUtils.nanoTime() - lastSpawnTime > 1000000000) spawnRing()
 
-        for (ring in rings) {
-            renderer.begin(ShapeRenderer.ShapeType.Line)
-            renderer.color = Color.BLUE
-            renderer.circle(0f, 0f, ring)
-            renderer.end()
+        for (ring in rings.reversed()) {
+            batch.begin()
+            batch.draw(tGate, -ring/2, -ring/2, ring,ring)
+            batch.end()
         }
 
-        rings = (rings.map { it + Gdx.graphics.deltaTime })
-                .filter { it <= 1 }.toMutableList()
+        //Position dot
+        batch.begin()
+        val size = 0.1f
+        batch.color = Color.RED
+        batch.draw(tCircle, input.x-size/2, input.y-size/2, size, size)
+        batch.end()
+
+        rings = (rings.map { it + 1*Gdx.graphics.deltaTime })
+                .filter { it <= 2 }.toMutableList()
         //TODO filter -> collision check & filter
 
     }
