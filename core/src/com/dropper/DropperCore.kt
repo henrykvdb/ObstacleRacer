@@ -69,8 +69,8 @@ class DropperCore : ApplicationAdapter() {
     override fun render() {
         val minSize = min(Gdx.graphics.width, Gdx.graphics.height).toFloat()
         val input = Vector2(
-                Gdx.input.x.toFloat() / minSize * 2f - 1f,
-                -Gdx.input.y.toFloat() / minSize * 2f + 1f
+                (2f * Gdx.input.x.toFloat() - Gdx.graphics.width) / minSize,
+                -(2f * Gdx.input.y.toFloat() - Gdx.graphics.height) / minSize
         )
         input.clamp(0f, 1f)
         cam.position.set(input.x, input.y, 0f)
