@@ -9,5 +9,6 @@ fun main() {
     config.width = 450
     config.height = 800
     config.title = "Dropper"
+    config.samples=5
     LwjglApplication(DropperCore(), config)
 }

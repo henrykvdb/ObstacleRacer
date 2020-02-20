@@ -2,9 +2,18 @@ package com.dropper
 
 import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.graphics.*
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.assets.AssetManager
+import com.badlogic.gdx.graphics.Camera
+import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.graphics.GL20
+import com.badlogic.gdx.graphics.PerspectiveCamera
+import com.badlogic.gdx.graphics.g3d.Model
+import com.badlogic.gdx.graphics.g3d.ModelBatch
+import com.badlogic.gdx.graphics.g3d.ModelInstance
+import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
+import com.badlogic.gdx.graphics.g3d.utils.DefaultRenderableSorter
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
+import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.TimeUtils
 import java.util.*
@@ -15,22 +24,41 @@ const val RING_SPEED = 5f
 class Ring(val color: Color, val rot: Float, var z: Float)
 
 class DropperCore : ApplicationAdapter() {
+    private lateinit var frameRate: FrameRate
+
     private lateinit var cam: Camera
+
+    private lateinit var manager: AssetManager
+
     private lateinit var renderer: ShapeRenderer
-    private lateinit var batch: SpriteBatch
+    private lateinit var modelBatch: ModelBatch
+
+    private lateinit var modelGate: Model
+
     private var start: Long = 0
-    private lateinit var textureGate: Texture
-    private lateinit var tCircle: Texture
 
     override fun create() {
-        cam = PerspectiveCamera(90f, 0f, 0f)//Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
-        cam.position.set(0f, 0f, 10f)
+        frameRate = FrameRate()
+
+        cam = PerspectiveCamera(90f, 0f, 0f)
+        cam.position.set(0f, 0f, 0f)
         cam.lookAt(0f, 0f, 0f)
+        cam.near = 0f
 
         renderer = ShapeRenderer()
-        batch = SpriteBatch()
+        modelBatch = ModelBatch { camera, renderables ->
+            val default = DefaultRenderableSorter()
+            default.sort(camera, renderables)
+            renderables.reverse()
+        }
 
-        textureGate = Texture(Gdx.files.internal("gate1.png"))
+        manager = AssetManager()
+
+        val modelGatePath = "gate1.g3db"
+        manager.load(modelGatePath, Model::class.java)
+
+        manager.finishLoading()
+        modelGate = manager.get(modelGatePath)
 
         updateCamera()
         start = TimeUtils.millis()
@@ -44,6 +72,10 @@ class DropperCore : ApplicationAdapter() {
 
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
+        //antialias
+        if (Gdx.graphics.bufferFormat.coverageSampling)
+            Gdx.gl.glClear(GL20.GL_COVERAGE_BUFFER_BIT_NV)
+
         Gdx.gl.glLineWidth(5f)
 
         //Lines
@@ -52,20 +84,36 @@ class DropperCore : ApplicationAdapter() {
         val time = TimeUtils.timeSinceMillis(start)
         for (i in 0 until 8) {
             val vec = Vector3.X.cpy().rotate(Vector3.Z, 360f / 8 * i + time / 40)
-            renderer.line(vec + 10f * Vector3.Z, vec - DEPTH * Vector3.Z)
+            renderer.line(vec + Vector3.Z, vec - DEPTH * Vector3.Z)
         }
         renderer.end()
 
         //Rings
-        for (ring in rings) {
-            batch.transformMatrix.rotate(0f, 0f, 1f, ring.rot)
-            batch.transformMatrix.translate(0f, 0f, ring.z)
-            batch.begin()
-            batch.draw(textureGate, -1f, -1f, 2f, 2f)
-            batch.end()
-            batch.transformMatrix.translate(0f, 0f, -ring.z)
-            batch.transformMatrix.rotate(0f, 0f, 1f, -ring.rot)
+        val instances = rings.map { ring ->
+            val transform = Matrix4()
+                    .translate(0f, 0f, ring.z)
+                    .rotate(Vector3.Z, ring.rot)
+                    .rotate(Vector3.X, 90f)
+                    .scale(2f, 2f, 2f)
+
+            val instance = ModelInstance(
+                    modelGate,
+                    transform
+            )
+
+            val mat = instance.model.materials.single()
+            mat.set(ColorAttribute(ColorAttribute.Diffuse, ring.color))
+
+            instance
         }
+
+        modelBatch.begin(cam)
+        modelBatch.render(instances)
+        modelBatch.end()
+
+        //fps
+        frameRate.update()
+        frameRate.render()
 
         //World update
         if (TimeUtils.nanoTime() - lastSpawnTime > 300000000)
@@ -74,7 +122,7 @@ class DropperCore : ApplicationAdapter() {
         val iter = rings.iterator()
         for (ring in iter) {
             ring.z += Gdx.graphics.deltaTime * RING_SPEED
-            if (ring.z >= 10) iter.remove()
+            if (ring.z > 1.0) iter.remove()
         }
     }
 
@@ -89,13 +137,15 @@ class DropperCore : ApplicationAdapter() {
     }
 
     override fun dispose() {
+        frameRate.dispose()
         renderer.dispose()
-        batch.dispose()
-        textureGate.dispose()
-        tCircle.dispose()
+        modelBatch.dispose()
+        manager.dispose()
     }
 
     override fun resize(width: Int, height: Int) {
+        frameRate.resize(width, height)
+
         cam.viewportWidth = width.toFloat()
         cam.viewportHeight = height.toFloat()
         updateCamera()
@@ -105,6 +155,5 @@ class DropperCore : ApplicationAdapter() {
         cam.update()
 
         renderer.projectionMatrix = cam.combined
-        batch.projectionMatrix = cam.combined
     }
 }
