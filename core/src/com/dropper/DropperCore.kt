@@ -2,10 +2,7 @@ package com.dropper
 
 import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.graphics.Camera
-import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.GL20
-import com.badlogic.gdx.graphics.PerspectiveCamera
+import com.badlogic.gdx.graphics.*
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.Vector3
@@ -15,23 +12,27 @@ import java.util.*
 const val DEPTH = 20f
 const val RING_SPEED = 5f
 
-class Ring(val color: Color, var z: Float)
+class Ring(val color: Color, val rot: Float, var z: Float)
 
 class DropperCore : ApplicationAdapter() {
     private lateinit var cam: Camera
     private lateinit var renderer: ShapeRenderer
     private lateinit var batch: SpriteBatch
     private var start: Long = 0
+    private lateinit var textureGate: Texture
+    private lateinit var tCircle: Texture
 
     override fun create() {
-        cam = PerspectiveCamera(90f, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
+        cam = PerspectiveCamera(90f, 0f, 0f)//Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
         cam.position.set(0f, 0f, 10f)
         cam.lookAt(0f, 0f, 0f)
-        cam.update()
 
         renderer = ShapeRenderer()
         batch = SpriteBatch()
 
+        textureGate = Texture(Gdx.files.internal("gate1.png"))
+
+        updateCamera()
         start = TimeUtils.millis()
     }
 
@@ -39,19 +40,11 @@ class DropperCore : ApplicationAdapter() {
         val input = cam.unproject(Vector3(Gdx.input.x.toFloat(), Gdx.input.y.toFloat(), 0f))
         input.clamp(0f, 1f)
         cam.position.set(input)
-        cam.update()
+        updateCamera()
 
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f)
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
         Gdx.gl.glLineWidth(5f)
-
-        renderer.projectionMatrix = cam.combined
-
-        //Front circle
-        /*renderer.begin(ShapeRenderer.ShapeType.Filled)
-        renderer.color = Color.GREEN
-        renderer.circle(0f, 0f, 1f)
-        renderer.end()*/
 
         //Lines
         renderer.begin(ShapeRenderer.ShapeType.Line)
@@ -64,16 +57,19 @@ class DropperCore : ApplicationAdapter() {
         renderer.end()
 
         //Rings
-        if (TimeUtils.nanoTime() - lastSpawnTime > 300000000) spawnRing()
-
-        renderer.begin(ShapeRenderer.ShapeType.Line)
         for (ring in rings) {
-            renderer.translate(0f, 0f, ring.z)
-            renderer.color = ring.color
-            renderer.circle(0f, 0f, 1f, 40)
-            renderer.translate(0f, 0f, -ring.z)
+            batch.transformMatrix.rotate(0f, 0f, 1f, ring.rot)
+            batch.transformMatrix.translate(0f, 0f, ring.z)
+            batch.begin()
+            batch.draw(textureGate, -1f, -1f, 2f, 2f)
+            batch.end()
+            batch.transformMatrix.translate(0f, 0f, -ring.z)
+            batch.transformMatrix.rotate(0f, 0f, 1f, -ring.rot)
         }
-        renderer.end()
+
+        //World update
+        if (TimeUtils.nanoTime() - lastSpawnTime > 300000000)
+            spawnRing()
 
         val iter = rings.iterator()
         for (ring in iter) {
@@ -87,18 +83,28 @@ class DropperCore : ApplicationAdapter() {
 
     private fun spawnRing() {
         val color = Color(Math.random().toFloat(), Math.random().toFloat(), Math.random().toFloat(), 1f)
-        rings.push(Ring(color, -DEPTH))
+        rings.push(Ring(color, (Math.random() * 360).toFloat(), -DEPTH))
 
         lastSpawnTime = TimeUtils.nanoTime()
     }
 
     override fun dispose() {
         renderer.dispose()
+        batch.dispose()
+        textureGate.dispose()
+        tCircle.dispose()
     }
 
     override fun resize(width: Int, height: Int) {
         cam.viewportWidth = width.toFloat()
         cam.viewportHeight = height.toFloat()
+        updateCamera()
+    }
+
+    private fun updateCamera() {
         cam.update()
+
+        renderer.projectionMatrix = cam.combined
+        batch.projectionMatrix = cam.combined
     }
 }
