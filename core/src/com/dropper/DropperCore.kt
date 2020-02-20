@@ -14,9 +14,11 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
 import com.badlogic.gdx.graphics.g3d.utils.DefaultRenderableSorter
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.Matrix4
+import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.TimeUtils
 import java.util.*
+import kotlin.math.min
 
 const val DEPTH = 20f
 const val RING_SPEED = 5f
@@ -65,9 +67,13 @@ class DropperCore : ApplicationAdapter() {
     }
 
     override fun render() {
-        val input = cam.unproject(Vector3(Gdx.input.x.toFloat(), Gdx.input.y.toFloat(), 0f))
+        val minSize = min(Gdx.graphics.width, Gdx.graphics.height).toFloat()
+        val input = Vector2(
+                Gdx.input.x.toFloat() / minSize * 2f - 1f,
+                -Gdx.input.y.toFloat() / minSize * 2f + 1f
+        )
         input.clamp(0f, 1f)
-        cam.position.set(input)
+        cam.position.set(input.x, input.y, 0f)
         updateCamera()
 
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f)
