@@ -17,13 +17,15 @@ import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.TimeUtils
+import com.sun.org.apache.xpath.internal.operations.Mod
 import java.util.*
 import kotlin.math.min
+import kotlin.reflect.typeOf
 
 const val DEPTH = 20f
-const val RING_SPEED = 5f
+const val RING_SPEED = 4f
 
-class Ring(val color: Color, val rot: Float, var z: Float)
+class Ring(val color: Color, val type: Int, val rot: Float, var z: Float)
 
 class DropperCore : ApplicationAdapter() {
     private lateinit var frameRate: FrameRate
@@ -35,9 +37,10 @@ class DropperCore : ApplicationAdapter() {
     private lateinit var renderer: ShapeRenderer
     private lateinit var modelBatch: ModelBatch
 
-    private lateinit var modelGate: Model
+    private lateinit var models: Array<Model>
 
     private var start: Long = 0
+    private val random = Random()
 
     override fun create() {
         frameRate = FrameRate()
@@ -56,11 +59,12 @@ class DropperCore : ApplicationAdapter() {
 
         manager = AssetManager()
 
-        val modelGatePath = "gate1.g3db"
-        manager.load(modelGatePath, Model::class.java)
-
+        //TODO auto find .g3db resources
+        for (i in 0..8)
+            manager.load("gate$i.g3db", Model::class.java)
         manager.finishLoading()
-        modelGate = manager.get(modelGatePath)
+
+        models = Array<Model>(9) { i -> manager.get("gate$i.g3db") }
 
         updateCamera()
         start = TimeUtils.millis()
@@ -102,15 +106,10 @@ class DropperCore : ApplicationAdapter() {
                     .rotate(Vector3.X, 90f)
                     .scale(2f, 2f, 2f)
 
-            val instance = ModelInstance(
-                    modelGate,
-                    transform
-            )
-
-            val mat = instance.model.materials.single()
-            mat.set(ColorAttribute(ColorAttribute.Diffuse, ring.color))
-
-            instance
+            ModelInstance(models[ring.type], transform).apply {
+                model.materials.first().set(ColorAttribute(ColorAttribute.Diffuse, ring.color))
+                model.materials.get(1).set(ColorAttribute(ColorAttribute.Diffuse, Color.WHITE))
+            }
         }
 
         modelBatch.begin(cam)
@@ -122,7 +121,7 @@ class DropperCore : ApplicationAdapter() {
         frameRate.render()
 
         //World update
-        if (TimeUtils.nanoTime() - lastSpawnTime > 300000000)
+        if (TimeUtils.nanoTime() - lastSpawnTime > 500000000)
             spawnRing()
 
         val iter = rings.iterator()
@@ -137,7 +136,8 @@ class DropperCore : ApplicationAdapter() {
 
     private fun spawnRing() {
         val color = Color(Math.random().toFloat(), Math.random().toFloat(), Math.random().toFloat(), 1f)
-        rings.push(Ring(color, (Math.random() * 360).toFloat(), -DEPTH))
+        val type = random.nextInt(models.size)
+        rings.push(Ring(color, type, (Math.random() * 360).toFloat(), -DEPTH))
 
         lastSpawnTime = TimeUtils.nanoTime()
     }
