@@ -11,5 +11,8 @@ class AndroidLauncher : AndroidApplication() {
         val config = AndroidApplicationConfiguration()
         config.numSamples = 5
         initialize(DropperCore { Gdx.files.internal("") }, config)
+
+        if(rateCondition())
+            createRateDialog()
     }
 }
