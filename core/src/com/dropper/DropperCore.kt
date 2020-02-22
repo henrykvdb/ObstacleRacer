@@ -107,8 +107,8 @@ class DropperCore : ApplicationAdapter() {
                     .scale(2f, 2f, 2f)
 
             ModelInstance(models[ring.type], transform).apply {
-                model.materials.first().set(ColorAttribute(ColorAttribute.Diffuse, ring.color))
-                model.materials.get(1).set(ColorAttribute(ColorAttribute.Diffuse, Color.WHITE))
+                materials[0].set(ColorAttribute(ColorAttribute.Diffuse, ring.color))
+                materials[1].set(ColorAttribute(ColorAttribute.Diffuse, Color.WHITE))
             }
         }
 
