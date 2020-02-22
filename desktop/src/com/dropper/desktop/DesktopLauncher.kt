@@ -1,5 +1,6 @@
 package com.dropper.desktop
 
+import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration
 import com.dropper.DropperCore
@@ -9,6 +10,9 @@ fun main() {
     config.width = 450
     config.height = 800
     config.title = "Dropper"
-    config.samples=5
-    LwjglApplication(DropperCore(), config)
+    config.samples = 5
+
+    LwjglApplication(DropperCore {
+        Gdx.files.local("")
+    }, config)
 }

@@ -3,6 +3,7 @@ package com.dropper
 import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.assets.AssetManager
+import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Camera
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.GL20
@@ -25,7 +26,7 @@ const val RING_SPEED = 4f
 
 class Ring(val color: Color, val type: Int, val rot: Float, var z: Float)
 
-class DropperCore : ApplicationAdapter() {
+class DropperCore(private val files: () -> FileHandle) : ApplicationAdapter() {
     private lateinit var frameRate: FrameRate
 
     private lateinit var cam: Camera
@@ -56,7 +57,7 @@ class DropperCore : ApplicationAdapter() {
         }
 
         manager = AssetManager()
-        val modelFiles = Gdx.files.internal("models").list(".g3db")
+        val modelFiles = files().child("gates").list(".g3db")
         for (file in modelFiles) {
             manager.load(file.path(), Model::class.java)
         }
