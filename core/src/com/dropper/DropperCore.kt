@@ -21,30 +21,35 @@ import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.TimeUtils
 import java.util.*
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 const val DEPTH = 20f
-const val RING_SPEED = 4f
+const val GATE_DISTANCE = 3f
+const val GATE_BASE_SPEED = 4f
+const val GATE_ACCELERATION = 0.05f
 
 class Ring(val color: Color, val type: Int, val rot: Float, var z: Float)
 
 class DropperCore(private val files: () -> FileHandle) : ApplicationAdapter() {
-    private lateinit var frameRate: FrameRate
-
-    private lateinit var cam: Camera
-
     private lateinit var manager: AssetManager
     private lateinit var music: Music
+    private lateinit var textRenderer: TextRenderer
+    private lateinit var fpsRenderer: TextRenderer
 
+    private lateinit var cam: Camera
     private lateinit var renderer: ShapeRenderer
     private lateinit var modelBatch: ModelBatch
-
     private lateinit var models: List<Model>
 
-    private var start: Long = 0
+    private var startTime: Long = 0
     private val random = Random()
 
+    private var speed = GATE_BASE_SPEED
+    private var score = 0f
+
     override fun create() {
-        frameRate = FrameRate()
+        textRenderer = TextRenderer((min(Gdx.graphics.width, Gdx.graphics.height) * 0.1).roundToInt())
+        fpsRenderer = TextRenderer((min(Gdx.graphics.width, Gdx.graphics.height) * 0.03).roundToInt())
 
         cam = PerspectiveCamera(90f, 0f, 0f)
         cam.position.set(0f, 0f, 0f)
@@ -67,7 +72,7 @@ class DropperCore(private val files: () -> FileHandle) : ApplicationAdapter() {
         models = modelFiles.map { manager.get<Model>(it.path()) }
 
         updateCamera()
-        start = TimeUtils.millis()
+        startTime = TimeUtils.millis()
 
         music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"))
         music.volume = 0.8f
@@ -94,17 +99,17 @@ class DropperCore(private val files: () -> FileHandle) : ApplicationAdapter() {
         Gdx.gl.glLineWidth(5f)
 
         //Lines
+        val elapsedTime = TimeUtils.timeSinceMillis(startTime)
         renderer.begin(ShapeRenderer.ShapeType.Line)
         renderer.color = Color.CYAN
-        val time = TimeUtils.timeSinceMillis(start)
         for (i in 0 until 8) {
-            val vec = Vector3.X.cpy().rotate(Vector3.Z, 360f / 8 * i + time / 40)
+            val vec = Vector3.X.cpy().rotate(Vector3.Z, 360f / 8 * i + elapsedTime / 40)
             renderer.line(vec + Vector3.Z, vec - DEPTH * Vector3.Z)
         }
         renderer.end()
 
         //Rings
-        val instances = rings.map { ring ->
+        val instances = gates.map { ring ->
             val transform = Matrix4()
                     .translate(0f, 0f, ring.z)
                     .rotate(Vector3.Z, ring.rot)
@@ -122,33 +127,39 @@ class DropperCore(private val files: () -> FileHandle) : ApplicationAdapter() {
         modelBatch.end()
 
         //fps
-        frameRate.update()
-        frameRate.render()
+        val fps = Gdx.graphics.framesPerSecond
+        fpsRenderer.render("$fps fps", Gdx.graphics.width / 2f, Gdx.graphics.height - textRenderer.size / 2f)
+        textRenderer.render("${score.toInt()}", Gdx.graphics.width / 2f, textRenderer.size / 2f)
 
         //World update
-        if (TimeUtils.nanoTime() - lastSpawnTime > 500000000)
+        if (gates.isEmpty() || gates.first.z > -DEPTH + GATE_DISTANCE)
             spawnRing()
 
-        val iter = rings.iterator()
-        for (ring in iter) {
-            ring.z += Gdx.graphics.deltaTime * RING_SPEED
-            if (ring.z > 1.0) iter.remove()
+        val iter = gates.iterator()
+        for (gate in iter) {
+            gate.z += Gdx.graphics.deltaTime * speed
+            if (gate.z > 1.0)
+                iter.remove()
         }
+
+        speed += Gdx.graphics.deltaTime * GATE_ACCELERATION
+        score += speed * Gdx.graphics.deltaTime
     }
 
-    private var rings = ArrayDeque<Ring>()
+    private var gates = ArrayDeque<Ring>()
     private var lastSpawnTime = 0L
 
     private fun spawnRing() {
         val color = Color(Math.random().toFloat(), Math.random().toFloat(), Math.random().toFloat(), 1f)
         val type = random.nextInt(models.size)
-        rings.push(Ring(color, type, (Math.random() * 360).toFloat(), -DEPTH))
+        gates.push(Ring(color, type, (Math.random() * 360).toFloat(), -DEPTH))
 
         lastSpawnTime = TimeUtils.nanoTime()
     }
 
     override fun dispose() {
-        frameRate.dispose()
+        textRenderer.dispose()
+        fpsRenderer.dispose()
         renderer.dispose()
         modelBatch.dispose()
         manager.dispose()
@@ -156,7 +167,8 @@ class DropperCore(private val files: () -> FileHandle) : ApplicationAdapter() {
     }
 
     override fun resize(width: Int, height: Int) {
-        frameRate.resize(width, height)
+        textRenderer.resize(width, height)
+        fpsRenderer.resize(width, height)
 
         cam.viewportWidth = width.toFloat()
         cam.viewportHeight = height.toFloat()
