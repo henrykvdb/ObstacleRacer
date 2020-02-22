@@ -17,10 +17,8 @@ import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.TimeUtils
-import com.sun.org.apache.xpath.internal.operations.Mod
 import java.util.*
 import kotlin.math.min
-import kotlin.reflect.typeOf
 
 const val DEPTH = 20f
 const val RING_SPEED = 4f
@@ -37,7 +35,7 @@ class DropperCore : ApplicationAdapter() {
     private lateinit var renderer: ShapeRenderer
     private lateinit var modelBatch: ModelBatch
 
-    private lateinit var models: Array<Model>
+    private lateinit var models: List<Model>
 
     private var start: Long = 0
     private val random = Random()
@@ -58,13 +56,12 @@ class DropperCore : ApplicationAdapter() {
         }
 
         manager = AssetManager()
-
-        //TODO auto find .g3db resources
-        for (i in 0..8)
-            manager.load("gate$i.g3db", Model::class.java)
+        val modelFiles = Gdx.files.internal("models").list(".g3db")
+        for (file in modelFiles) {
+            manager.load(file.path(), Model::class.java)
+        }
         manager.finishLoading()
-
-        models = Array<Model>(9) { i -> manager.get("gate$i.g3db") }
+        models = modelFiles.map { manager.get<Model>(it.path()) }
 
         updateCamera()
         start = TimeUtils.millis()
