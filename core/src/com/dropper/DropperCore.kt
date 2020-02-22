@@ -3,6 +3,7 @@ package com.dropper
 import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.assets.AssetManager
+import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Camera
 import com.badlogic.gdx.graphics.Color
@@ -32,6 +33,7 @@ class DropperCore(private val files: () -> FileHandle) : ApplicationAdapter() {
     private lateinit var cam: Camera
 
     private lateinit var manager: AssetManager
+    private lateinit var music: Music
 
     private lateinit var renderer: ShapeRenderer
     private lateinit var modelBatch: ModelBatch
@@ -66,6 +68,11 @@ class DropperCore(private val files: () -> FileHandle) : ApplicationAdapter() {
 
         updateCamera()
         start = TimeUtils.millis()
+
+        music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"))
+        music.volume = 0.8f
+        music.isLooping = true
+        music.play()
     }
 
     override fun render() {
@@ -145,6 +152,7 @@ class DropperCore(private val files: () -> FileHandle) : ApplicationAdapter() {
         renderer.dispose()
         modelBatch.dispose()
         manager.dispose()
+        music.dispose()
     }
 
     override fun resize(width: Int, height: Int) {
