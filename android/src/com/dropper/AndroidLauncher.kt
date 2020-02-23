@@ -18,7 +18,7 @@ class AndroidLauncher : AndroidApplication() {
         val config = AndroidApplicationConfiguration()
         config.numSamples = 5
 
-        initialize(DropperCore({ Gdx.files.internal("") }, object : DropperHandler {
+        initialize(DropperAdapter({ Gdx.files.internal("") }, object : DropperHandler {
             override fun showAd() = runOnUiThread {
                 if (BuildConfig.DEBUG)
                     createAd()

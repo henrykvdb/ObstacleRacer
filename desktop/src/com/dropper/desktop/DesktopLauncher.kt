@@ -3,7 +3,7 @@ package com.dropper.desktop
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration
-import com.dropper.DropperCore
+import com.dropper.DropperAdapter
 import com.dropper.DropperHandler
 
 fun main() {
@@ -13,7 +13,7 @@ fun main() {
     config.title = "Dropper"
     config.samples = 5
 
-    LwjglApplication(DropperCore({ Gdx.files.local("") }, object : DropperHandler {
+    LwjglApplication(DropperAdapter({ Gdx.files.local("") }, object : DropperHandler {
         override fun showAd() {
             println("Request: ad")
         }
@@ -23,7 +23,7 @@ fun main() {
         }
 
         override fun submitLeaderboard(score: Int) {
-            println("Request: submit leaderboard")
+            println("Request: submit leaderboard score: $score")
         }
     }), config)
 }

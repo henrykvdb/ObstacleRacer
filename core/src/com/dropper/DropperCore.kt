@@ -1,11 +1,9 @@
 package com.dropper
 
-import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.files.FileHandle
-import com.badlogic.gdx.graphics.Camera
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.PerspectiveCamera
@@ -18,6 +16,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
+import com.badlogic.gdx.utils.Disposable
 import com.badlogic.gdx.utils.TimeUtils
 import java.util.*
 import kotlin.math.min
@@ -30,57 +29,57 @@ const val GATE_ACCELERATION = 0.05f
 
 class Ring(val color: Color, val type: Int, val rot: Float, var z: Float)
 
-class DropperCore(private val files: () -> FileHandle, private val handler: DropperHandler) : ApplicationAdapter() {
-    private lateinit var manager: AssetManager
-    private lateinit var music: Music
-    private lateinit var textRenderer: TextRenderer
-    private lateinit var fpsRenderer: TextRenderer
+class DropperCore(files: FileHandle, private val handler: DropperHandler) {
+    private val disposables = mutableListOf<Disposable>()
 
-    private lateinit var cam: Camera
-    private lateinit var renderer: ShapeRenderer
-    private lateinit var modelBatch: ModelBatch
-    private lateinit var models: List<Model>
+    private val cam = PerspectiveCamera(90f, 0f, 0f).apply {
+        position.set(0f, 0f, 0f)
+        lookAt(0f, 0f, -1f)
+        near = 0f
+    }
 
-    private var startTime: Long = 0
+    private val renderer = ShapeRenderer().disposable()
+    private val modelBatch = ModelBatch { camera, renderables ->
+        val default = DefaultRenderableSorter()
+        default.sort(camera, renderables)
+        renderables.reverse()
+    }.disposable()
+
+    private val textRenderer = TextRenderer((min(Gdx.graphics.width, Gdx.graphics.height) * 0.1).roundToInt()).disposable()
+    private val fpsRenderer = TextRenderer((min(Gdx.graphics.width, Gdx.graphics.height) * 0.03).roundToInt()).disposable()
+
+    private val models: List<Model>
+    private val music: Music
+
+    private val startTime: Long
     private val random = Random()
 
     private var speed = GATE_BASE_SPEED
     private var score = 0f
 
-    override fun create() {
-        textRenderer = TextRenderer((min(Gdx.graphics.width, Gdx.graphics.height) * 0.1).roundToInt())
-        fpsRenderer = TextRenderer((min(Gdx.graphics.width, Gdx.graphics.height) * 0.03).roundToInt())
-
-        cam = PerspectiveCamera(90f, 0f, 0f)
-        cam.position.set(0f, 0f, 0f)
-        cam.lookAt(0f, 0f, 0f)
-        cam.near = 0f
-
-        renderer = ShapeRenderer()
-        modelBatch = ModelBatch { camera, renderables ->
-            val default = DefaultRenderableSorter()
-            default.sort(camera, renderables)
-            renderables.reverse()
-        }
-
-        manager = AssetManager()
-        val modelFiles = files().child("gates").list(".g3db")
+    init {
+        //asset loading
+        val manager = AssetManager().disposable()
+        val modelFiles = files.child("gates").list(".g3db")
         for (file in modelFiles) {
             manager.load(file.path(), Model::class.java)
         }
+        manager.load("music.mp3", Music::class.java)
+
         manager.finishLoading()
+
         models = modelFiles.map { manager.get<Model>(it.path()) }
+        music = manager.get<Music>("music.mp3")
 
-        updateCamera()
-        startTime = TimeUtils.millis()
-
-        music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"))
         music.volume = 0.8f
         music.isLooping = true
         music.play()
+
+        updateCamera()
+        startTime = TimeUtils.millis()
     }
 
-    override fun render() {
+    fun render() {
         val minSize = min(Gdx.graphics.width, Gdx.graphics.height).toFloat()
         val input = Vector2(
                 (2f * Gdx.input.x.toFloat() - Gdx.graphics.width) / minSize,
@@ -157,16 +156,7 @@ class DropperCore(private val files: () -> FileHandle, private val handler: Drop
         lastSpawnTime = TimeUtils.nanoTime()
     }
 
-    override fun dispose() {
-        textRenderer.dispose()
-        fpsRenderer.dispose()
-        renderer.dispose()
-        modelBatch.dispose()
-        manager.dispose()
-        music.dispose()
-    }
-
-    override fun resize(width: Int, height: Int) {
+    fun resize(width: Int, height: Int) {
         textRenderer.resize(width, height)
         fpsRenderer.resize(width, height)
 
@@ -179,5 +169,11 @@ class DropperCore(private val files: () -> FileHandle, private val handler: Drop
         cam.update()
 
         renderer.projectionMatrix = cam.combined
+    }
+
+    private fun <T : Disposable> T.disposable() = this.also { disposables += it }
+
+    fun dispose() {
+        disposables.asReversed().forEach(Disposable::dispose)
     }
 }
