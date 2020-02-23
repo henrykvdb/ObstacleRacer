@@ -85,15 +85,21 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
     }
 
     fun render() {
-        val minSize = min(Gdx.graphics.width, Gdx.graphics.height).toFloat()
-        val input = Vector2(
-                (2f * Gdx.input.x.toFloat() - Gdx.graphics.width) / minSize,
-                -(2f * Gdx.input.y.toFloat() - Gdx.graphics.height) / minSize
-        )
-        input.clamp(0f, 1f)
-        //never go exactly to the edge, both rendering and collision would break
-        cam.position.set(input.x / 1.05f, input.y / 1.05f, 0f)
-        updateCamera()
+        //Update camera
+        if (!dead){
+            val minSize = min(Gdx.graphics.width, Gdx.graphics.height).toFloat()
+            val input = Vector2(
+                    (2f * Gdx.input.x.toFloat() - Gdx.graphics.width) / minSize,
+                    -(2f * Gdx.input.y.toFloat() - Gdx.graphics.height) / minSize
+            ).clamp(0f, 1f)
+
+            //never go exactly to the edge, both rendering and collision would break
+            cam.position.set(input.x / 1.05f, input.y / 1.05f, 0f)
+            updateCamera()
+        }
+        else if (Gdx.input.isTouched){
+            restart()
+        }
 
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
@@ -140,8 +146,6 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
         if (gates.isEmpty() || gates.first.z > -DEPTH + GATE_DISTANCE)
             spawnRing()
 
-        score += Gdx.graphics.deltaTime * speed
-
         val iter = gates.iterator()
         for (gate in iter) {
             gate.z += Gdx.graphics.deltaTime * speed
@@ -156,23 +160,33 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
             }
         }
 
-        speed += Gdx.graphics.deltaTime * GATE_ACCELERATION
+        if (!dead) {
+            score += Gdx.graphics.deltaTime * speed
+            speed += Gdx.graphics.deltaTime * GATE_ACCELERATION
+        }
     }
 
+    var dead = false
     private fun die() {
+        dead = true
+        speed = 0f
+        gates.forEach { it.z -= GATE_DISTANCE/2f }
+        handler.showAd()
+    }
+
+    private fun restart() {
         score = 0f
+        speed = GATE_BASE_SPEED
+        gates.clear()
+        dead = false
     }
 
     private var gates = ArrayDeque<Ring>()
-    private var lastSpawnTime = 0L
-
     private fun spawnRing() {
         val color = Color(Math.random().toFloat(), Math.random().toFloat(), Math.random().toFloat(), 1f)
         val type = random.nextInt(models.size)
         val rot = (Math.random() * 360).toFloat()
         gates.push(Ring(color, type, rot, -DEPTH))
-
-        lastSpawnTime = TimeUtils.nanoTime()
     }
 
     fun resize(width: Int, height: Int) {
