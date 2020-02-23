@@ -26,6 +26,7 @@ const val DEPTH = 20f
 const val GATE_DISTANCE = 3f
 const val GATE_BASE_SPEED = 4f
 const val GATE_ACCELERATION = 0.05f
+const val GATE_DEPTH = 0.1f
 
 class Ring(val color: Color, val type: Int, val rot: Float, var z: Float)
 
@@ -49,6 +50,8 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
     private val fpsRenderer = TextRenderer((min(Gdx.graphics.width, Gdx.graphics.height) * 0.03).roundToInt()).disposable()
 
     private val models: List<Model>
+    private val collisionMeshes: List<CollisionMesh>
+
     private val music: Music
 
     private val startTime: Long
@@ -69,6 +72,8 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
         manager.finishLoading()
 
         models = modelFiles.map { manager.get<Model>(it.path()) }
+        collisionMeshes = models.map { CollisionMesh(it) }
+
         music = manager.get<Music>("music.mp3")
 
         music.volume = 0.8f
@@ -86,7 +91,8 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
                 -(2f * Gdx.input.y.toFloat() - Gdx.graphics.height) / minSize
         )
         input.clamp(0f, 1f)
-        cam.position.set(input.x, input.y, 0f)
+        //never go exactly to the edge, both rendering and collision would break
+        cam.position.set(input.x / 1.05f, input.y / 1.05f, 0f)
         updateCamera()
 
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f)
@@ -112,7 +118,7 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
             val transform = Matrix4()
                     .translate(0f, 0f, ring.z)
                     .rotate(Vector3.Z, ring.rot)
-                    .rotate(Vector3.X, 90f)
+                    .rotate(Vector3.X, -90f)
                     .scale(2f, 2f, 2f)
 
             ModelInstance(models[ring.type], transform).apply {
@@ -134,15 +140,27 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
         if (gates.isEmpty() || gates.first.z > -DEPTH + GATE_DISTANCE)
             spawnRing()
 
+        score += Gdx.graphics.deltaTime * speed
+
         val iter = gates.iterator()
         for (gate in iter) {
             gate.z += Gdx.graphics.deltaTime * speed
             if (gate.z > 1.0)
                 iter.remove()
+
+            //collision detection
+            if (gate.z in -GATE_DEPTH / 2f..GATE_DEPTH / 2f) {
+                val meshPosition = cam.position.cpy().rotate(Vector3.Z, -gate.rot).scl(0.5f)
+                if (collisionMeshes[gate.type].collides(meshPosition.x, meshPosition.y))
+                    die()
+            }
         }
 
         speed += Gdx.graphics.deltaTime * GATE_ACCELERATION
-        score += Gdx.graphics.deltaTime * speed
+    }
+
+    private fun die() {
+        score = 0f
     }
 
     private var gates = ArrayDeque<Ring>()
@@ -151,7 +169,8 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
     private fun spawnRing() {
         val color = Color(Math.random().toFloat(), Math.random().toFloat(), Math.random().toFloat(), 1f)
         val type = random.nextInt(models.size)
-        gates.push(Ring(color, type, (Math.random() * 360).toFloat(), -DEPTH))
+        val rot = (Math.random() * 360).toFloat()
+        gates.push(Ring(color, type, rot, -DEPTH))
 
         lastSpawnTime = TimeUtils.nanoTime()
     }

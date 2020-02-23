@@ -24,3 +24,5 @@ operator fun <T : Vector<T>> Vector<T>.divAssign(scalar: Float) {
 }
 
 operator fun <T : Vector<T>> Vector<T>.unaryMinus(): T = this.scl(-1f)
+
+val Float.Companion.SIZE_BYTES get() = 4
