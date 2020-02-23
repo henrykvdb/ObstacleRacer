@@ -30,7 +30,7 @@ const val GATE_ACCELERATION = 0.05f
 
 class Ring(val color: Color, val type: Int, val rot: Float, var z: Float)
 
-class DropperCore(private val files: () -> FileHandle) : ApplicationAdapter() {
+class DropperCore(private val files: () -> FileHandle, private val handler: DropperHandler) : ApplicationAdapter() {
     private lateinit var manager: AssetManager
     private lateinit var music: Music
     private lateinit var textRenderer: TextRenderer
@@ -143,7 +143,7 @@ class DropperCore(private val files: () -> FileHandle) : ApplicationAdapter() {
         }
 
         speed += Gdx.graphics.deltaTime * GATE_ACCELERATION
-        score += speed * Gdx.graphics.deltaTime
+        score += Gdx.graphics.deltaTime * speed
     }
 
     private var gates = ArrayDeque<Ring>()
