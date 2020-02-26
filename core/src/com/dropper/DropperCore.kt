@@ -24,9 +24,14 @@ import kotlin.math.roundToInt
 
 const val DEPTH = 20f
 const val GATE_DISTANCE = 3f
+const val GATE_DEPTH = 0.1f
+
 const val GATE_BASE_SPEED = 4f
 const val GATE_ACCELERATION = 0.05f
-const val GATE_DEPTH = 0.1f
+
+const val GATE_REVERSE_BASE_SPEED = -2f
+const val BOUNCE_DISTANCE = GATE_DISTANCE/2
+const val GATE_REVERSE_ACCELERATION = GATE_REVERSE_BASE_SPEED*GATE_REVERSE_BASE_SPEED/ BOUNCE_DISTANCE/2
 
 class Ring(val color: Color, val type: Int, val rot: Float, var z: Float)
 
@@ -48,37 +53,40 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
 
     private val textRenderer = TextRenderer((min(Gdx.graphics.width, Gdx.graphics.height) * 0.1).roundToInt()).disposable()
     private val fpsRenderer = TextRenderer((min(Gdx.graphics.width, Gdx.graphics.height) * 0.03).roundToInt()).disposable()
+    private var menuRenderer = MenuRenderer(handler).disposable()
 
     private val models: List<Model>
     private val collisionMeshes: List<CollisionMesh>
 
-    private val music: Music
-
     private val startTime: Long
     private val random = Random()
 
-    private var speed = GATE_BASE_SPEED
+    //State
+    private var gates = ArrayDeque<Ring>()
+    private var speed = 0f
     private var score = 0f
+    private var highscore = handler.getHighscore()
+    private var menu = true
 
     init {
         //asset loading
         val manager = AssetManager().disposable()
+        manager.load("music.mp3", Music::class.java)
         val modelFiles = files.child("gates").list(".g3db")
         for (file in modelFiles) {
             manager.load(file.path(), Model::class.java)
         }
-        manager.load("music.mp3", Music::class.java)
 
         manager.finishLoading()
 
         models = modelFiles.map { manager.get<Model>(it.path()) }
         collisionMeshes = models.map { CollisionMesh(it) }
 
-        music = manager.get<Music>("music.mp3")
-
+        val music = manager.get<Music>("music.mp3")
         music.volume = 0.8f
         music.isLooping = true
         music.play()
+        music.disposable()
 
         updateCamera()
         startTime = TimeUtils.millis()
@@ -86,7 +94,7 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
 
     fun render() {
         //Update camera
-        if (!dead){
+        if (!menu){
             val minSize = min(Gdx.graphics.width, Gdx.graphics.height).toFloat()
             val input = Vector2(
                     (2f * Gdx.input.x.toFloat() - Gdx.graphics.width) / minSize,
@@ -97,19 +105,17 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
             cam.position.set(input.x / 1.05f, input.y / 1.05f, 0f)
             updateCamera()
         }
-        else if (Gdx.input.isTouched){
-            restart()
-        }
 
+        //Reset background
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
+
         //antialias
         if (Gdx.graphics.bufferFormat.coverageSampling)
             Gdx.gl.glClear(GL20.GL_COVERAGE_BUFFER_BIT_NV)
 
-        Gdx.gl.glLineWidth(5f)
-
         //Lines
+        Gdx.gl.glLineWidth(5f)
         val elapsedTime = TimeUtils.timeSinceMillis(startTime)
         renderer.begin(ShapeRenderer.ShapeType.Line)
         renderer.color = Color.CYAN
@@ -120,7 +126,8 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
         renderer.end()
 
         //Rings
-        val instances = gates.map { ring ->
+        modelBatch.begin(cam)
+        modelBatch.render(gates.map { ring ->
             val transform = Matrix4()
                     .translate(0f, 0f, ring.z)
                     .rotate(Vector3.Z, ring.rot)
@@ -131,16 +138,12 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
                 materials[0].set(ColorAttribute(ColorAttribute.Diffuse, ring.color))
                 materials[1].set(ColorAttribute(ColorAttribute.Diffuse, Color.WHITE))
             }
-        }
-
-        modelBatch.begin(cam)
-        modelBatch.render(instances)
+        })
         modelBatch.end()
 
         //fps
         val fps = Gdx.graphics.framesPerSecond
-        fpsRenderer.render("$fps fps", Gdx.graphics.width / 2f, Gdx.graphics.height - textRenderer.size / 2f)
-        textRenderer.render("${score.toInt()}", Gdx.graphics.width / 2f, textRenderer.size / 2f)
+        fpsRenderer.renderc("$fps fps", Gdx.graphics.width / 2f, Gdx.graphics.height - textRenderer.height / 2f)
 
         //World update
         if (gates.isEmpty() || gates.first.z > -DEPTH + GATE_DISTANCE)
@@ -160,28 +163,35 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
             }
         }
 
-        if (!dead) {
+        if (menu){
+            speed += Gdx.graphics.deltaTime * GATE_REVERSE_ACCELERATION
+            speed = min(speed,0f)
+
+            val restart = menuRenderer.renderScore(score.toInt(),highscore)
+            if (restart) restart()
+        }
+        else {
             score += Gdx.graphics.deltaTime * speed
             speed += Gdx.graphics.deltaTime * GATE_ACCELERATION
+            textRenderer.renderc("${score.toInt()}", Gdx.graphics.width / 2f, textRenderer.height / 2f)
         }
     }
 
-    var dead = false
     private fun die() {
-        dead = true
-        speed = 0f
-        gates.forEach { it.z -= GATE_DISTANCE/2f }
-        handler.showAd()
+        menu = true
+        speed = GATE_REVERSE_BASE_SPEED
+        gates.forEach { it.z -= GATE_DEPTH*2 }
+        handler.submitScore(score.toInt())
+        highscore = handler.getHighscore()
     }
 
     private fun restart() {
         score = 0f
         speed = GATE_BASE_SPEED
         gates.clear()
-        dead = false
+        menu = false
     }
 
-    private var gates = ArrayDeque<Ring>()
     private fun spawnRing() {
         val color = Color(Math.random().toFloat(), Math.random().toFloat(), Math.random().toFloat(), 1f)
         val type = random.nextInt(models.size)
@@ -192,6 +202,7 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
     fun resize(width: Int, height: Int) {
         textRenderer.resize(width, height)
         fpsRenderer.resize(width, height)
+        menuRenderer.resize(width, height)
 
         cam.viewportWidth = width.toFloat()
         cam.viewportHeight = height.toFloat()

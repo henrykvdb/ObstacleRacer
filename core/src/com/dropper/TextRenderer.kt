@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator
 import com.badlogic.gdx.utils.Disposable
 
 
-class TextRenderer(val size: Int) : Disposable {
+class TextRenderer(val height: Int) : Disposable {
     private var batch: SpriteBatch = SpriteBatch()
     private var cam: OrthographicCamera
     private var font: BitmapFont
@@ -18,7 +18,7 @@ class TextRenderer(val size: Int) : Disposable {
         cam = OrthographicCamera(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
         val generator = FreeTypeFontGenerator(Gdx.files.internal("font.ttf"))
         val parameter = FreeTypeFontGenerator.FreeTypeFontParameter()
-        parameter.size = size
+        parameter.size = height
         font = generator.generateFont(parameter) // font size 12 pixels
         generator.dispose() // don't forget to dispose to avoid memory leaks!
     }
@@ -30,10 +30,20 @@ class TextRenderer(val size: Int) : Disposable {
         batch.projectionMatrix = cam.combined
     }
 
-    fun render(text: String, posX: Float, posY: Float) {
+    //Render centered at (posX, posY)
+    fun renderc(text: String, posX: Float, posY: Float) {
         val layout = GlyphLayout(font, text)
         batch.begin()
         font.draw(batch, layout, posX - layout.width / 2f, Gdx.graphics.height - posY + layout.height / 2f)
+        batch.end()
+    }
+
+    fun width(text: String) = GlyphLayout(font, text).width
+
+    //Render at (posX, posY)
+    fun render(text: String, posX: Float, posY: Float) {
+        batch.begin()
+        font.draw(batch, GlyphLayout(font, text), posX, Gdx.graphics.height - posY)
         batch.end()
     }
 

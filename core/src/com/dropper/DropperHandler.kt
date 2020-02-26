@@ -1,7 +1,9 @@
 package com.dropper
 
 interface DropperHandler {
-    fun showAd()
     fun showLeaderboard()
-    fun submitLeaderboard(score: Int)
+    fun showRateDialog()
+    fun showAboutDialog()
+    fun submitScore(score: Int)
+    fun getHighscore(): Int
 }

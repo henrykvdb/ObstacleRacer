@@ -19,17 +19,34 @@ class AndroidLauncher : AndroidApplication() {
         config.numSamples = 5
 
         initialize(DropperAdapter({ Gdx.files.internal("") }, object : DropperHandler {
-            override fun showAd() = runOnUiThread {
-                if (BuildConfig.DEBUG)
-                    createAd()
-            }
-
             override fun showLeaderboard() {
                 TODO("not implemented")
             }
 
-            override fun submitLeaderboard(score: Int) {
-                TODO("not implemented")
+            override fun showRateDialog() = runOnUiThread{
+                createRateDialog()
+            }
+
+            override fun showAboutDialog() {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            }
+
+            override fun submitScore(score: Int) {
+                val prefs = getSharedPreferences("SCORE", 0)
+
+                if (score>prefs.getInt("HIGHSCORE",0)){
+                    val editor = prefs.edit()
+                    editor.putInt("HIGHSCORE",score)
+                    editor.apply()
+                }
+
+                if (!BuildConfig.DEBUG)
+                    createAd()
+            }
+
+            override fun getHighscore(): Int {
+                val prefs = getSharedPreferences("SCORE", 0)
+                return prefs.getInt("HIGHSCORE",0)
             }
         }), config)
 
