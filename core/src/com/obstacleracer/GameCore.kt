@@ -30,8 +30,10 @@ const val GATE_BASE_SPEED = 4f
 const val GATE_ACCELERATION = 0.05f
 
 const val GATE_REVERSE_BASE_SPEED = -2f
-const val BOUNCE_DISTANCE = GATE_DISTANCE /2
-const val GATE_REVERSE_ACCELERATION = GATE_REVERSE_BASE_SPEED * GATE_REVERSE_BASE_SPEED / BOUNCE_DISTANCE /2
+const val BOUNCE_DISTANCE = GATE_DISTANCE / 2
+const val GATE_REVERSE_ACCELERATION = GATE_REVERSE_BASE_SPEED * GATE_REVERSE_BASE_SPEED / BOUNCE_DISTANCE / 2
+
+const val COLOR_MIN_BRIGHTNESS = 0.4f
 
 class Ring(val color: Color, val type: Int, val rot: Float, var z: Float)
 
@@ -94,7 +96,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
 
     fun render() {
         //Update camera
-        if (!menu){
+        if (!menu) {
             val minSize = min(Gdx.graphics.width, Gdx.graphics.height).toFloat()
             val input = Vector2(
                     (2f * Gdx.input.x.toFloat() - Gdx.graphics.width) / minSize,
@@ -163,14 +165,13 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
             }
         }
 
-        if (menu){
+        if (menu) {
             speed += Gdx.graphics.deltaTime * GATE_REVERSE_ACCELERATION
-            speed = min(speed,0f)
+            speed = min(speed, 0f)
 
-            val restart = menuRenderer.renderScore(score.toInt(),highscore)
+            val restart = menuRenderer.renderScore(score.toInt(), highscore)
             if (restart) restart()
-        }
-        else {
+        } else {
             score += Gdx.graphics.deltaTime * speed
             speed += Gdx.graphics.deltaTime * GATE_ACCELERATION
             textRenderer.renderc("${score.toInt()}", Gdx.graphics.width / 2f, textRenderer.height / 2f)
@@ -180,7 +181,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
     private fun die() {
         menu = true
         speed = GATE_REVERSE_BASE_SPEED
-        gates.forEach { it.z -= GATE_DEPTH *2 }
+        gates.forEach { it.z -= GATE_DEPTH * 2 }
         handler.submitScore(score.toInt())
         highscore = handler.getHighscore()
     }
@@ -193,7 +194,9 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
     }
 
     private fun spawnRing() {
-        val color = Color(Math.random().toFloat(), Math.random().toFloat(), Math.random().toFloat(), 1f)
+        val color = Color()
+        val colorValue = Math.random().toFloat() * (1f - COLOR_MIN_BRIGHTNESS) + COLOR_MIN_BRIGHTNESS
+        color.fromHsv(Math.random().toFloat() * 360f, Math.random().toFloat(), colorValue)
         val type = random.nextInt(models.size)
         val rot = (Math.random() * 360).toFloat()
         gates.push(Ring(color, type, rot, -DEPTH))
