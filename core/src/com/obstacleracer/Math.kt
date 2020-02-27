@@ -1,6 +1,8 @@
 package com.obstacleracer
 
 import com.badlogic.gdx.math.Vector
+import com.badlogic.gdx.math.Vector2
+import com.badlogic.gdx.math.Vector3
 
 operator fun <T : Vector<T>> Vector<T>.plus(other: T): T = this.cpy().add(other)
 operator fun <T : Vector<T>> Vector<T>.plusAssign(other: T) {
@@ -23,6 +25,8 @@ operator fun <T : Vector<T>> Vector<T>.divAssign(scalar: Float) {
     this.scl(1 / scalar)
 }
 
-operator fun <T : Vector<T>> Vector<T>.unaryMinus(): T = this.scl(-1f)
+operator fun <T : Vector<T>> Vector<T>.unaryMinus(): T = this.cpy().scl(-1f)
 
 val Float.Companion.SIZE_BYTES get() = 4
+
+val Vector3.xy get() = Vector2(this.x, this.y)

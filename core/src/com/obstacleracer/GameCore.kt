@@ -55,16 +55,18 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
 
     private val textRenderer = TextRenderer((min(Gdx.graphics.width, Gdx.graphics.height) * 0.1).roundToInt()).disposable()
     private val fpsRenderer = TextRenderer((min(Gdx.graphics.width, Gdx.graphics.height) * 0.03).roundToInt()).disposable()
-    private var menuRenderer = MenuRenderer(handler).disposable()
+    private val menuRenderer = MenuRenderer(handler).disposable()
 
     private val models: List<Model>
     private val collisionMeshes: List<CollisionMesh>
+
+    private val joystick = Joystick().disposable()
 
     private val startTime: Long
     private val random = Random()
 
     //State
-    private var gates = ArrayDeque<Ring>()
+    private val gates = ArrayDeque<Ring>()
     private var speed = 0f
     private var score = 0f
     private var highscore = handler.getHighscore()
@@ -90,18 +92,25 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
         music.play()
         music.disposable()
 
+        Gdx.input.inputProcessor = joystick
+
         updateCamera()
         startTime = TimeUtils.millis()
     }
 
+    private fun touchInput(): Vector2 {
+        val minSize = min(Gdx.graphics.width, Gdx.graphics.height).toFloat()
+        return Vector2(
+                (2f * Gdx.input.x.toFloat() - Gdx.graphics.width) / minSize,
+                -(2f * Gdx.input.y.toFloat() - Gdx.graphics.height) / minSize
+        ).clamp(0f, 1f)
+    }
+
     fun render() {
-        //Update camera
+        //Update camera based on input
         if (!menu) {
-            val minSize = min(Gdx.graphics.width, Gdx.graphics.height).toFloat()
-            val input = Vector2(
-                    (2f * Gdx.input.x.toFloat() - Gdx.graphics.width) / minSize,
-                    -(2f * Gdx.input.y.toFloat() - Gdx.graphics.height) / minSize
-            ).clamp(0f, 1f)
+//            val input = touchInput()
+            val input = joystick.controlInput()
 
             //never go exactly to the edge, both rendering and collision would break
             cam.position.set(input.x / 1.05f, input.y / 1.05f, 0f)
@@ -146,6 +155,8 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
         //fps
         val fps = Gdx.graphics.framesPerSecond
         fpsRenderer.renderc("$fps fps", Gdx.graphics.width / 2f, Gdx.graphics.height - textRenderer.height / 2f)
+
+        joystick.render()
 
         //World update
         if (gates.isEmpty() || gates.first.z > -DEPTH + GATE_DISTANCE)
@@ -210,6 +221,8 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
         cam.viewportWidth = width.toFloat()
         cam.viewportHeight = height.toFloat()
         updateCamera()
+
+        joystick.resize(width, height)
     }
 
     private fun updateCamera() {
