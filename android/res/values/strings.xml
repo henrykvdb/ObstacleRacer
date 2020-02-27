@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Dropper</string>
+    <string name="app_name">Obstacle Racer</string>
     <string name="rate">Rate</string>
     <string name="rate_message">If you enjoy using Dropper, please take a moment to rate it. Thanks for your support!</string>
     <string name="rate_app">Rate app</string>
     <string name="later">Later</string>
     <string name="no_thanks">No, thanks</string>
+
     <string name="admob_ad_id">ca-app-pub-6464324284979557/1243314542</string>
+    <string name="google_app_id">260837503688</string>
 
 </resources>

@@ -20,7 +20,7 @@ allprojects {
 
     version = '1.0'
     ext {
-        appName = "Dropper"
+        appName = "Obstacle Racer"
         gdxVersion = '1.9.10'
         roboVMVersion = '2.3.8'
         box2DLightsVersion = '1.4'
@@ -59,7 +59,10 @@ project(":android") {
         natives "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-x86_64"
 
         api "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+
         implementation 'com.google.android.gms:play-services-ads:18.3.0'
+        implementation 'com.google.android.gms:play-services-auth:17.0.0'
+        implementation 'com.google.android.gms:play-services-games:19.0.0'
     }
 }
 

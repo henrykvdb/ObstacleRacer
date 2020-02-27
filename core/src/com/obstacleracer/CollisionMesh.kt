@@ -1,4 +1,4 @@
-package com.dropper
+package com.obstacleracer
 
 import com.badlogic.gdx.graphics.VertexAttributes
 import com.badlogic.gdx.graphics.g3d.Model

@@ -1,4 +1,4 @@
-package com.dropper
+package com.obstacleracer
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Color
@@ -13,7 +13,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 
-class MenuRenderer(private val handler: DropperHandler) : Disposable {
+class MenuRenderer(private val handler: GameHandler) : Disposable {
     val minDim = min(Gdx.graphics.width, Gdx.graphics.height)
 
     private var shapeRenderer: ShapeRenderer = ShapeRenderer()

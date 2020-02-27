@@ -1,6 +1,6 @@
-package com.dropper
+package com.obstacleracer
 
-interface DropperHandler {
+interface GameHandler {
     fun showLeaderboard()
     fun showRateDialog()
     fun showAboutDialog()

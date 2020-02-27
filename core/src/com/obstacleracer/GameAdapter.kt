@@ -1,11 +1,11 @@
-package com.dropper
+package com.obstacleracer
 
 import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.files.FileHandle
 
-class DropperAdapter(
+class GameAdapter(
         private val fileConstructor: () -> FileHandle,
-        private val handler: DropperHandler
+        private val handler: GameHandler
 ) : ApplicationAdapter() {
     private lateinit var core: DropperCore
 

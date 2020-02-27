@@ -1,4 +1,4 @@
-package com.dropper
+package com.obstacleracer
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.assets.AssetManager
@@ -30,12 +30,12 @@ const val GATE_BASE_SPEED = 4f
 const val GATE_ACCELERATION = 0.05f
 
 const val GATE_REVERSE_BASE_SPEED = -2f
-const val BOUNCE_DISTANCE = GATE_DISTANCE/2
-const val GATE_REVERSE_ACCELERATION = GATE_REVERSE_BASE_SPEED*GATE_REVERSE_BASE_SPEED/ BOUNCE_DISTANCE/2
+const val BOUNCE_DISTANCE = GATE_DISTANCE /2
+const val GATE_REVERSE_ACCELERATION = GATE_REVERSE_BASE_SPEED * GATE_REVERSE_BASE_SPEED / BOUNCE_DISTANCE /2
 
 class Ring(val color: Color, val type: Int, val rot: Float, var z: Float)
 
-class DropperCore(files: FileHandle, private val handler: DropperHandler) {
+class DropperCore(files: FileHandle, private val handler: GameHandler) {
     private val disposables = mutableListOf<Disposable>()
 
     private val cam = PerspectiveCamera(90f, 0f, 0f).apply {
@@ -180,7 +180,7 @@ class DropperCore(files: FileHandle, private val handler: DropperHandler) {
     private fun die() {
         menu = true
         speed = GATE_REVERSE_BASE_SPEED
-        gates.forEach { it.z -= GATE_DEPTH*2 }
+        gates.forEach { it.z -= GATE_DEPTH *2 }
         handler.submitScore(score.toInt())
         highscore = handler.getHighscore()
     }
