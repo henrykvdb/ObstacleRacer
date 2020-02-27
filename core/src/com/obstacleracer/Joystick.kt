@@ -9,6 +9,7 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Disposable
 import kotlin.math.min
+import kotlin.math.pow
 
 //as a fraction of the minimum screen size
 const val JOYSTICK_SIZE = 1 / 6f
@@ -45,7 +46,12 @@ class Joystick : InputAdapter(), Disposable {
         Gdx.graphics.gL20.glDisable(GL20.GL_BLEND)
     }
 
-    fun controlInput(): Vector2 = handle
+    fun controlInput(): Vector2 {
+        val len = handle.len()
+        val newLen = 1 / 2f * (len + len.pow(1.5f))
+
+        return handle.cpy().setLength(newLen)
+    }
 
     fun resize(width: Int, height: Int) {
         size = JOYSTICK_SIZE * min(Gdx.graphics.width, Gdx.graphics.height).toFloat()
