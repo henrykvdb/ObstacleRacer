@@ -156,7 +156,9 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
         val fps = Gdx.graphics.framesPerSecond
         fpsRenderer.renderc("$fps fps", Gdx.graphics.width / 2f, Gdx.graphics.height - textRenderer.height / 2f)
 
-        joystick.render()
+        if (!menu) {
+            joystick.render()
+        }
 
         //World update
         if (gates.isEmpty() || gates.first.z > -DEPTH + GATE_DISTANCE)

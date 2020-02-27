@@ -17,7 +17,7 @@ class Joystick : InputAdapter(), Disposable {
     private val camera = OrthographicCamera(0f, 0f)
     private val shapeRenderer = ShapeRenderer()
 
-    var size: Float = 0f
+    private var size: Float = 0f
 
     private var center: Vector2? = null //in pixels
     private var handle: Vector2 = Vector2(0f, 0f) //relative to size, clamped to unit vector
@@ -42,7 +42,6 @@ class Joystick : InputAdapter(), Disposable {
 
         shapeRenderer.end()
 
-
         Gdx.graphics.gL20.glDisable(GL20.GL_BLEND)
     }
 
@@ -55,6 +54,7 @@ class Joystick : InputAdapter(), Disposable {
         camera.update()
 
         shapeRenderer.projectionMatrix.set(camera.combined)
+        shapeRenderer.updateMatrices()
     }
 
     override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
