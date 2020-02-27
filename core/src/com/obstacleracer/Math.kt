@@ -29,4 +29,8 @@ operator fun <T : Vector<T>> Vector<T>.unaryMinus(): T = this.cpy().scl(-1f)
 
 val Float.Companion.SIZE_BYTES get() = 4
 
-val Vector3.xy get() = Vector2(this.x, this.y)
+var Vector3.xy: Vector2
+    get() = Vector2(this.x, this.y)
+    set(value) {
+        this.set(value, this.z)
+    }

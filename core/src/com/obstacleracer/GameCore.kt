@@ -35,6 +35,8 @@ const val GATE_REVERSE_ACCELERATION = GATE_REVERSE_BASE_SPEED * GATE_REVERSE_BAS
 
 const val COLOR_MIN_BRIGHTNESS = 0.4f
 
+const val CAMERA_FRICTION = 0.8f
+
 class Ring(val color: Color, val type: Int, val rot: Float, var z: Float)
 
 class DropperCore(files: FileHandle, private val handler: GameHandler) {
@@ -113,7 +115,9 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
             val input = joystick.controlInput()
 
             //never go exactly to the edge, both rendering and collision would break
-            cam.position.set(input.x / 1.05f, input.y / 1.05f, 0f)
+            input /= 1.05f
+
+            cam.position.xy = (1 - CAMERA_FRICTION) * input + CAMERA_FRICTION * cam.position.xy
             updateCamera()
         }
 
