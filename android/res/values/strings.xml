@@ -1,17 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="rate_message">If you enjoy using Obstacle Dodge, please take a moment to rate it. Thanks for your support!</string>
+    <string name="rate_message">If you enjoy using Obstacle Racer, please take a moment to rate it. Thanks for your support!</string>
     <string name="libgdx_credit"><a href="https://www.github.com/libgdx/libgdx/blob/master/LICENSE">LibGdx</a>\n<a href="https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt">Kotlin</a></string>
+    <string name="credits_1">Henryk Van der Bruggen (Coding)</string>
+    <string name="credits_2">Karel Peeters (Coding)</string>
+    <string name="credits_3">Eric Matyas (Music)</string>
     <string name="app_name">Obstacle Racer</string>
     <string name="no_thanks">No, thanks</string>
     <string name="rate_app">Rate app</string>
+    <string name="licenses">Licenses</string>
     <string name="version">Version</string>
     <string name="later">Later</string>
+    <string name="close">close</string>
     <string name="rate">Rate</string>
 
     <string name="admob_ad_id">ca-app-pub-6464324284979557/1243314542</string>
     <string name="google_app_id">260837503688</string>
+    <string name="leaderboard_id">CgkIyOWB2csHEAIQAA</string>
 
 
 </resources>

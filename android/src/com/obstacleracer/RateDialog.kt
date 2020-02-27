@@ -4,32 +4,31 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
-import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.view.WindowManager
 
-private const val DONT_SHOW_AGAIN = "dontshowagain"
-private const val DATE_FIRST_LAUNCH = "date_firstlaunch"
-private const val LAUNCH_COUNT = "launch_count"
+private const val SHARED_PREF_DONT_SHOW_AGAIN = "dontshowagain"
+private const val SHARED_PREF_DATE_FIRST_LAUNCH = "date_firstlaunch"
+private const val SHARED_PREF_LAUNCH_COUNT = "launch_count"
 
 private const val DAYS_UNTIL_RATE = 3      //Min number of days needed before asking for rating
 private const val LAUNCHES_UNTIL_RATE = 3  //Min number of launches before asking for rating
 
 fun Context.rateCondition(): Boolean {
-    val prefs = getSharedPreferences("APP_RATER", 0)
-    if (prefs.getBoolean(DONT_SHOW_AGAIN, false)) return false
+    val prefs = getSharedPreferences(SHARED_PREF, 0)
+    if (prefs.getBoolean(SHARED_PREF_DONT_SHOW_AGAIN, false)) return false
     val editor = prefs.edit()
 
     // Increment launch counter
-    val launchCount = prefs.getLong(LAUNCH_COUNT, 0) + 1
-    editor.putLong(LAUNCH_COUNT, launchCount)
+    val launchCount = prefs.getLong(SHARED_PREF_LAUNCH_COUNT, 0) + 1
+    editor.putLong(SHARED_PREF_LAUNCH_COUNT, launchCount)
 
     // Get date of first launch
-    var firstLaunch = prefs.getLong(DATE_FIRST_LAUNCH, 0)
+    var firstLaunch = prefs.getLong(SHARED_PREF_DATE_FIRST_LAUNCH, 0)
     if (firstLaunch == 0L) {
         firstLaunch = System.currentTimeMillis()
-        editor.putLong(DATE_FIRST_LAUNCH, firstLaunch)
+        editor.putLong(SHARED_PREF_DATE_FIRST_LAUNCH, firstLaunch)
     }
 
     editor.apply()
@@ -40,11 +39,11 @@ fun Context.rateCondition(): Boolean {
 }
 
 fun Context.createRateDialog() {
-    val editor = getSharedPreferences("APP_RATER", 0).edit()
+    val editor = getSharedPreferences(SHARED_PREF, 0).edit()
     val dialogClickListener = DialogInterface.OnClickListener { _, which ->
         when (which) {
             DialogInterface.BUTTON_POSITIVE -> {
-                editor.putBoolean(DONT_SHOW_AGAIN, true)
+                editor.putBoolean(SHARED_PREF_DONT_SHOW_AGAIN, true)
                 editor.apply()
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName")).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
@@ -56,7 +55,7 @@ fun Context.createRateDialog() {
                 })
             }
             DialogInterface.BUTTON_NEGATIVE -> {
-                editor.putBoolean(DONT_SHOW_AGAIN, true)
+                editor.putBoolean(SHARED_PREF_DONT_SHOW_AGAIN, true)
                 editor.apply()
             }
         }

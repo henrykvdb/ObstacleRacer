@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.text.method.LinkMovementMethod
-import android.text.util.Linkify
 import android.util.Log
 import android.view.View
 import android.widget.TextView
@@ -25,6 +24,8 @@ import com.google.android.gms.games.Games
 
 private const val RC_LEADERBOARD_UI = 9004
 private const val RC_SIGN_IN = 9005
+const val SHARED_PREF = "OBSTACLEDODGE"
+private const val SHARED_PREF_HIGHSCORE = "HIGHSCORE"
 
 class AndroidLauncher : AndroidApplication() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,11 +52,13 @@ class AndroidLauncher : AndroidApplication() {
             }
 
             override fun submitScore(score: Int) {
-                val prefs = getSharedPreferences("SCORE", 0)
+                val prefs = getSharedPreferences(SHARED_PREF, 0)
 
-                if (score > prefs.getInt("HIGHSCORE", 0)) {
+                var highScore = prefs.getInt(SHARED_PREF_HIGHSCORE, 0)
+                if (score > highScore) {
+                    highScore = score
                     val editor = prefs.edit()
-                    editor.putInt("HIGHSCORE", score)
+                    editor.putInt(SHARED_PREF_HIGHSCORE, highScore)
                     editor.apply()
                 }
 
@@ -64,14 +67,14 @@ class AndroidLauncher : AndroidApplication() {
 
                 runPlayAction(object : PlayAction {
                     override fun doAction(account: GoogleSignInAccount) = runOnUiThread {
-                        submitLeaderboard(account, score.toLong())
+                        submitLeaderboard(account, highScore.toLong())
                     }
                 }, ask = false)
             }
 
             override fun getHighscore(): Int {
-                val prefs = getSharedPreferences("SCORE", 0)
-                return prefs.getInt("HIGHSCORE", 0)
+                val prefs = getSharedPreferences(SHARED_PREF, 0)
+                return prefs.getInt(SHARED_PREF_HIGHSCORE, 0)
             }
         }), config)
 
@@ -81,7 +84,6 @@ class AndroidLauncher : AndroidApplication() {
 
     fun createAboutDialog() {
         val layout = View.inflate(this, R.layout.dialog_body_about, null)
-
         (layout.findViewById<View>(R.id.versionName_view) as TextView).text = try {
             resources.getText(R.string.app_name).toString() + "\n" + getString(R.string.version) + " " +
                     packageManager.getPackageInfo(packageName, 0).versionName
@@ -93,18 +95,19 @@ class AndroidLauncher : AndroidApplication() {
         val textView = layout.findViewById<TextView>(R.id.license_view)
         textView.movementMethod = LinkMovementMethod.getInstance()
 
-        keepDialog(AlertDialog.Builder(this).setView(layout).setPositiveButton("close", null).show())
+        keepDialog(AlertDialog.Builder(this)
+                .setView(layout).setPositiveButton(getString(R.string.close), null).show())
 
     }
 
     fun submitLeaderboard(account: GoogleSignInAccount, score: Long) {
         Games.getLeaderboardsClient(this, account)
-                .submitScore("CgkIyOWB2csHEAIQAA", score)
+                .submitScore(getString(R.string.leaderboard_id), score)
     }
 
     private fun createLeaderboard(account: GoogleSignInAccount) {
         Games.getLeaderboardsClient(this, account)
-                .getLeaderboardIntent("CgkIyOWB2csHEAIQAA")
+                .getLeaderboardIntent(getString(R.string.leaderboard_id))
                 .addOnSuccessListener { intent ->
                     startActivityForResult(intent, RC_LEADERBOARD_UI)
                 }

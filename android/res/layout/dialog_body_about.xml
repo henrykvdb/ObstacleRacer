@@ -20,28 +20,28 @@
         android:textSize="20sp"
         android:id="@+id/versionName_view"/>
     <TextView
-        android:text="Henryk Van der Bruggen (Coding)"
+        android:text="@string/credits_1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textStyle="normal"
         android:textSize="16sp"
         android:paddingBottom="6dp"/>
     <TextView
-        android:text="Karel Peeters (Coding)"
+        android:text="@string/credits_2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textStyle="normal"
         android:textSize="16sp"
         android:paddingBottom="6dp"/>
     <TextView
-        android:text="Eric Matyas (Music)"
+        android:text="@string/credits_3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textStyle="normal"
         android:textSize="16sp"
         android:paddingBottom="6dp"/>
     <TextView
-        android:text="Licenses"
+        android:text="@string/licenses"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textStyle="normal|bold"
