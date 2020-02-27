@@ -67,7 +67,7 @@ class Joystick : InputAdapter(), Disposable {
         if (pointer != 0)
             return false
 
-        center = camera.unproject(Vector3(screenX.toFloat(), screenY.toFloat(), 0f)).xy
+        center = camera.unproject(Vector3(screenX.toFloat(), screenY.toFloat(), 0f)).xy - handle * size
         return true
     }
 
@@ -76,7 +76,6 @@ class Joystick : InputAdapter(), Disposable {
             return false
 
         center = null
-        handle = Vector2(0f, 0f)
         return true
     }
 
