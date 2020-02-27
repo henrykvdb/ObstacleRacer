@@ -81,13 +81,17 @@ class Joystick : InputAdapter(), Disposable {
     }
 
     override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
+        val center = center
         if (center == null || pointer != 0)
             return false
 
         val coords = Vector3(screenX.toFloat(), screenY.toFloat(), 0f)
         camera.unproject(coords)
 
-        handle = ((coords.xy - center!!) / size).clamp(0f, 1f)
+        val handleBeforeClamp = (coords.xy - center) / size
+        handle = handleBeforeClamp.cpy().clamp(0f, 1f)
+
+        center += (handleBeforeClamp - handle) * size
         return true
     }
 
