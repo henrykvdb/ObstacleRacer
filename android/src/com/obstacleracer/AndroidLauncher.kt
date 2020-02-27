@@ -1,20 +1,27 @@
 package com.obstacleracer
 
+import android.app.AlertDialog
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Bundle
+import android.text.method.LinkMovementMethod
+import android.text.util.Linkify
+import android.util.Log
+import android.view.View
+import android.widget.TextView
+import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.backends.android.AndroidApplication
+import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.InterstitialAd
 import com.google.android.gms.ads.MobileAds
-import android.content.Intent
-import android.os.Bundle
-import android.util.Log
-import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.backends.android.AndroidApplication
-import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.games.Games
+
 
 private const val RC_LEADERBOARD_UI = 9004
 private const val RC_SIGN_IN = 9005
@@ -39,8 +46,8 @@ class AndroidLauncher : AndroidApplication() {
                 createRateDialog()
             }
 
-            override fun showAboutDialog() {
-                TODO("not implemented")
+            override fun showAboutDialog() = runOnUiThread {
+                createAboutDialog()
             }
 
             override fun submitScore(score: Int) {
@@ -70,6 +77,24 @@ class AndroidLauncher : AndroidApplication() {
 
         if (rateCondition())
             createRateDialog()
+    }
+
+    fun createAboutDialog() {
+        val layout = View.inflate(this, R.layout.dialog_body_about, null)
+
+        (layout.findViewById<View>(R.id.versionName_view) as TextView).text = try {
+            resources.getText(R.string.app_name).toString() + "\n" + getString(R.string.version) + " " +
+                    packageManager.getPackageInfo(packageName, 0).versionName
+        } catch (e: PackageManager.NameNotFoundException) {
+            resources.getText(R.string.app_name)
+        }
+
+        //Update links
+        val textView = layout.findViewById<TextView>(R.id.license_view)
+        textView.movementMethod = LinkMovementMethod.getInstance()
+
+        keepDialog(AlertDialog.Builder(this).setView(layout).setPositiveButton("close", null).show())
+
     }
 
     fun submitLeaderboard(account: GoogleSignInAccount, score: Long) {
