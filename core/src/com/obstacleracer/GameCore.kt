@@ -20,14 +20,18 @@ import com.badlogic.gdx.utils.Disposable
 import com.badlogic.gdx.utils.TimeUtils
 import java.util.*
 import kotlin.math.min
+import kotlin.math.pow
 import kotlin.math.roundToInt
+
+const val SCORE_FACTOR = 3f
 
 const val DEPTH = 20f
 const val GATE_DISTANCE = 3f
 const val GATE_DEPTH = 0.1f
 
 const val GATE_BASE_SPEED = 4f
-const val GATE_ACCELERATION = 0.05f
+const val GATE_ACCELERATION = 0.10f
+const val GATE_SPEED_EXP = 0.8f
 
 const val GATE_REVERSE_BASE_SPEED = -2f
 const val BOUNCE_DISTANCE = GATE_DISTANCE / 2
@@ -69,8 +73,10 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
 
     //State
     private val gates = ArrayDeque<Ring>()
-    private var speed = 0f
+
+    private var time = 0f
     private var score = 0f
+
     private var highscore = handler.getHighscore()
     private var menu = true
 
@@ -165,8 +171,16 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
         }
 
         //World update
+        time += Gdx.graphics.deltaTime
+
         if (gates.isEmpty() || gates.first.z > -DEPTH + GATE_DISTANCE)
             spawnRing()
+
+        val speed = if (menu) {
+            min(0f, GATE_REVERSE_BASE_SPEED + 1 / 2f * GATE_REVERSE_ACCELERATION * time.pow(2))
+        } else {
+            GATE_BASE_SPEED + GATE_ACCELERATION * time.pow(GATE_SPEED_EXP)
+        }
 
         val iter = gates.iterator()
         for (gate in iter) {
@@ -182,30 +196,28 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
             }
         }
 
-        if (menu) {
-            speed += Gdx.graphics.deltaTime * GATE_REVERSE_ACCELERATION
-            speed = min(speed, 0f)
+        println(speed)
 
+        if (menu) {
             val restart = menuRenderer.renderScore(score.toInt(), highscore)
             if (restart) restart()
         } else {
-            score += Gdx.graphics.deltaTime * speed
-            speed += Gdx.graphics.deltaTime * GATE_ACCELERATION
+            score = SCORE_FACTOR * time
             textRenderer.renderc("${score.toInt()}", Gdx.graphics.width / 2f, textRenderer.height / 2f)
         }
     }
 
     private fun die() {
         menu = true
-        speed = GATE_REVERSE_BASE_SPEED
+        time = 0f
         gates.forEach { it.z -= GATE_DEPTH * 2 }
         handler.submitScore(score.toInt())
         highscore = handler.getHighscore()
     }
 
     private fun restart() {
+        time = 0f
         score = 0f
-        speed = GATE_BASE_SPEED
         gates.clear()
         menu = false
     }
