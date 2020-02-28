@@ -19,6 +19,7 @@ import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Disposable
 import com.badlogic.gdx.utils.TimeUtils
 import java.util.*
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -37,11 +38,15 @@ const val GATE_REVERSE_BASE_SPEED = -2f
 const val BOUNCE_DISTANCE = GATE_DISTANCE / 2
 const val GATE_REVERSE_ACCELERATION = GATE_REVERSE_BASE_SPEED * GATE_REVERSE_BASE_SPEED / BOUNCE_DISTANCE / 2
 
+const val GATE_ROT_START_TIME = 20f
+const val GATE_ROT_SPEED = 10f
+const val GATE_ROT_SPEED_EXP = 0.5f
+
 const val COLOR_MIN_BRIGHTNESS = 0.4f
 
 const val CAMERA_FRICTION = 0.8f
 
-class Ring(val color: Color, val type: Int, val rot: Float, var z: Float)
+class Ring(val color: Color, val type: Int, val rotSpeed: Float, var rot: Float, var z: Float)
 
 class DropperCore(files: FileHandle, private val handler: GameHandler) {
     private val disposables = mutableListOf<Disposable>()
@@ -185,6 +190,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
         val iter = gates.iterator()
         for (gate in iter) {
             gate.z += Gdx.graphics.deltaTime * speed
+            gate.rot += Gdx.graphics.deltaTime * gate.rotSpeed
             if (gate.z > 1.0)
                 iter.remove()
 
@@ -196,7 +202,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
             }
         }
 
-        println(speed)
+        println(time)
 
         if (menu) {
             val restart = menuRenderer.renderScore(score.toInt(), highscore)
@@ -226,9 +232,13 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
         val color = Color()
         val colorValue = Math.random().toFloat() * (1f - COLOR_MIN_BRIGHTNESS) + COLOR_MIN_BRIGHTNESS
         color.fromHsv(Math.random().toFloat() * 360f, Math.random().toFloat(), colorValue)
+
         val type = random.nextInt(models.size)
-        val rot = (Math.random() * 360).toFloat()
-        gates.push(Ring(color, type, rot, -DEPTH))
+
+        val rotSpeedDeviation = GATE_ROT_SPEED * max(0f, time - GATE_ROT_START_TIME).pow(GATE_ROT_SPEED_EXP)
+        val rotSpeed = random.nextGaussian().toFloat() * rotSpeedDeviation
+        val rot = Math.random().toFloat() * 360f
+        gates.push(Ring(color, type, rotSpeed, rot, -DEPTH))
     }
 
     fun resize(width: Int, height: Int) {
