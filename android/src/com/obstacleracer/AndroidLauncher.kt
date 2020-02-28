@@ -15,6 +15,7 @@ import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.InterstitialAd
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration.*
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -150,7 +151,11 @@ class AndroidLauncher : AndroidApplication() {
     }
 
     fun createAd() {
+        MobileAds.setRequestConfiguration(MobileAds.getRequestConfiguration().toBuilder()
+                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_T)
+                .setTagForUnderAgeOfConsent(TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE).build())
         MobileAds.initialize(this)
+
         InterstitialAd(this).apply {
             adUnitId = getString(R.string.admob_ad_id)
             loadAd(AdRequest.Builder().build())
