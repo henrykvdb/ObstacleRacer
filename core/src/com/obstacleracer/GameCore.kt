@@ -19,10 +19,7 @@ import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Disposable
 import com.badlogic.gdx.utils.TimeUtils
 import java.util.*
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.pow
-import kotlin.math.roundToInt
+import kotlin.math.*
 
 const val SCORE_FACTOR = 3f
 
@@ -43,6 +40,7 @@ const val GATE_ROT_SPEED = 10f
 const val GATE_ROT_SPEED_EXP = 0.5f
 
 const val COLOR_MIN_BRIGHTNESS = 0.4f
+const val COLOR_MIN_DISTANCE = 90f
 
 const val CAMERA_FRICTION = 0.8f
 
@@ -178,7 +176,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
         //World update
         time += Gdx.graphics.deltaTime
 
-        if (gates.isEmpty() || gates.first.z > -DEPTH + GATE_DISTANCE)
+        if (gates.isEmpty() || gates.last.z > -DEPTH + GATE_DISTANCE)
             spawnRing()
 
         val speed = if (menu) {
@@ -229,16 +227,22 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
     }
 
     private fun spawnRing() {
-        val color = Color()
-        val colorValue = Math.random().toFloat() * (1f - COLOR_MIN_BRIGHTNESS) + COLOR_MIN_BRIGHTNESS
-        color.fromHsv(Math.random().toFloat() * 360f, Math.random().toFloat(), colorValue)
+        val color = Color().apply {
+            val prevHue = gates.lastOrNull()?.color?.hue ?: random.nextFloat(0f, 360f)
+            val hue = prevHue + random.nextFloat(COLOR_MIN_DISTANCE, 360f - COLOR_MIN_DISTANCE)
+
+            val saturation = sqrt(random.nextFloat()) //uniform sampling of hsv cylinder
+            val value = random.nextFloat(COLOR_MIN_BRIGHTNESS, 1f)
+
+            fromHsv(hue, saturation, value)
+        }
 
         val type = random.nextInt(models.size)
 
         val rotSpeedDeviation = GATE_ROT_SPEED * max(0f, time - GATE_ROT_START_TIME).pow(GATE_ROT_SPEED_EXP)
         val rotSpeed = random.nextGaussian().toFloat() * rotSpeedDeviation
-        val rot = Math.random().toFloat() * 360f
-        gates.push(Ring(color, type, rotSpeed, rot, -DEPTH))
+        val rot = random.nextFloat(0f, 360f)
+        gates.add(Ring(color, type, rotSpeed, rot, -DEPTH))
     }
 
     fun resize(width: Int, height: Int) {

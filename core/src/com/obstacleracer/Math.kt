@@ -1,8 +1,10 @@
 package com.obstacleracer
 
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.math.Vector
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
+import java.util.*
 
 operator fun <T : Vector<T>> Vector<T>.plus(other: T): T = this.cpy().add(other)
 operator fun <T : Vector<T>> Vector<T>.plusAssign(other: T) {
@@ -34,3 +36,12 @@ var Vector3.xy: Vector2
     set(value) {
         this.set(value, this.z)
     }
+
+val Color.hue: Float
+    get() {
+        val arr = FloatArray(3)
+        toHsv(arr)
+        return arr[0]
+    }
+
+fun Random.nextFloat(min: Float, max: Float): Float = nextFloat() * (max - min) + min
