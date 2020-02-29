@@ -6,6 +6,7 @@
     <string name="credits_1">Henryk Van der Bruggen (Coding)</string>
     <string name="credits_2">Karel Peeters (Coding)</string>
     <string name="credits_3">Eric Matyas (Music)</string>
+    <string name="edit_consent">edit consent</string>
     <string name="app_name">Obstacle Racer</string>
     <string name="no_thanks">No, thanks</string>
     <string name="rate_app">Rate app</string>
@@ -15,9 +16,10 @@
     <string name="close">close</string>
     <string name="rate">Rate</string>
 
+    <string name="privacy_policy_url">https://sites.google.com/view/obstacleracer</string>
     <string name="admob_ad_id">ca-app-pub-6464324284979557/1243314542</string>
-    <string name="google_app_id">260837503688</string>
+    <string name="admob_publisher_id">pub-6464324284979557</string>
     <string name="leaderboard_id">CgkIyOWB2csHEAIQAA</string>
-
+    <string name="google_app_id">260837503688</string>
 
 </resources>

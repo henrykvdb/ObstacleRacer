@@ -1,6 +1,7 @@
 package com.obstacleracer
 
 import android.app.AlertDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -11,16 +12,20 @@ import android.widget.TextView
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.backends.android.AndroidApplication
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration
+import com.google.ads.consent.*
+import com.google.ads.mediation.admob.AdMobAdapter
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.InterstitialAd
 import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.RequestConfiguration.*
+import com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_T
+import com.google.android.gms.ads.RequestConfiguration.TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.games.Games
+import java.net.URL
 
 
 private const val RC_LEADERBOARD_UI = 9004
@@ -31,6 +36,7 @@ private const val SHARED_PREF_HIGHSCORE = "HIGHSCORE"
 class AndroidLauncher : AndroidApplication() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        updateConsent()
 
         val config = AndroidApplicationConfiguration()
         config.numSamples = 5
@@ -94,8 +100,9 @@ class AndroidLauncher : AndroidApplication() {
         val textView = layout.findViewById<TextView>(R.id.license_view)
         textView.movementMethod = LinkMovementMethod.getInstance()
 
-        keepDialog(AlertDialog.Builder(this)
-                .setView(layout).setPositiveButton(getString(R.string.close), null).show())
+        keepDialog(AlertDialog.Builder(this).setView(layout)
+                .setPositiveButton(getString(R.string.close), null)
+                .setNegativeButton(getString(R.string.edit_consent)) { _, _ -> requestConsentFromUser() }.show())
 
     }
 
@@ -158,16 +165,71 @@ class AndroidLauncher : AndroidApplication() {
 
         InterstitialAd(this).apply {
             adUnitId = getString(R.string.admob_ad_id)
-            loadAd(AdRequest.Builder().build())
-            adListener = object : AdListener() {
-                override fun onAdLoaded() {
-                    show()
-                }
 
+            //GDPR bitch
+            Log.e("ADMOB", "Loading ad consent: $consent")
+            val builder = AdRequest.Builder()
+            if (!consent) {
+                val extras = Bundle()
+                extras.putString("npa", "1")
+                builder.addNetworkExtrasBundle(AdMobAdapter::class.java, extras)
+            }
+            loadAd(builder.build())
+
+            adListener = object : AdListener() {
+                override fun onAdLoaded() = show()
                 override fun onAdFailedToLoad(p0: Int) {
                     Log.e("ADMOB", "Ad failed to load (code $p0)")
                 }
             }
         }
+    }
+
+    var consent = false
+    private fun updateConsent() {
+        val consentInformation = ConsentInformation.getInstance(this)
+        val publisherIds = arrayOf(getString(R.string.admob_publisher_id))
+        consentInformation.requestConsentInfoUpdate(publisherIds, object : ConsentInfoUpdateListener {
+            override fun onFailedToUpdateConsentInfo(reason: String?) {
+                consent = false
+            }
+
+            override fun onConsentInfoUpdated(consentStatus: ConsentStatus?) {
+                when (consentStatus) {
+                    ConsentStatus.PERSONALIZED -> consent = true
+                    ConsentStatus.NON_PERSONALIZED -> consent = false
+                    ConsentStatus.UNKNOWN -> {
+                        if (consentInformation.isRequestLocationInEeaOrUnknown) {
+                            requestConsentFromUser()
+                        } else consent = true
+                    }
+                }
+            }
+        })
+    }
+
+    var consentForm: ConsentForm? = null
+    fun requestConsentFromUser() {
+        val privacyUrl = URL(getString(R.string.privacy_policy_url))
+        consentForm = ConsentForm.Builder(context, privacyUrl)
+                .withListener(object : ConsentFormListener() {
+                    override fun onConsentFormLoaded() {
+                        consentForm?.show()
+                    }
+
+                    override fun onConsentFormOpened() {}
+
+                    override fun onConsentFormClosed(consentStatus: ConsentStatus, userPrefersAdFree: Boolean?) {
+                        if (consentStatus == ConsentStatus.PERSONALIZED) {
+                            consent = true
+                            ConsentInformation.getInstance(context).consentStatus = ConsentStatus.PERSONALIZED
+                        } else consent = false
+                    }
+
+                    override fun onConsentFormError(errorDescription: String?) {
+                        consent = false
+                    }
+                }).withPersonalizedAdsOption().withNonPersonalizedAdsOption().build()
+        consentForm?.load()
     }
 }

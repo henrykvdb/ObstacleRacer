@@ -61,6 +61,7 @@ project(":android") {
         api "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
         implementation 'com.google.android.gms:play-services-ads:18.3.0'
+        implementation 'com.google.android.ads.consent:consent-library:1.0.8'
         implementation 'com.google.android.gms:play-services-auth:17.0.0'
         implementation 'com.google.android.gms:play-services-games:19.0.0'
     }
