@@ -45,6 +45,7 @@ const val GATE_ROT_SPEED_EXP = 0.5f
 const val COLOR_MIN_BRIGHTNESS = 0.4f
 
 const val CAMERA_FRICTION = 0.8f
+const val CAMERA_SPEED = 0.1f
 
 class Ring(val color: Color, val type: Int, val rotSpeed: Float, var rot: Float, var z: Float)
 
@@ -71,7 +72,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
     private val models: List<Model>
     private val collisionMeshes: List<CollisionMesh>
 
-    private val joystick = Joystick().disposable()
+    private val joystick = Joystick(false).disposable()
 
     private val startTime: Long
     private val random = Random()
@@ -125,10 +126,11 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
 //            val input = touchInput()
             val input = joystick.controlInput()
 
-            //never go exactly to the edge, both rendering and collision would break
-            input /= 1.05f
+            cam.position.xy = cam.position.xy + CAMERA_SPEED * input
 
-            cam.position.xy = (1 - CAMERA_FRICTION) * input + CAMERA_FRICTION * cam.position.xy
+            //never go exactly to the edge, both rendering and collision would break
+            cam.position.clamp(0f, 1 / 1.05f)
+
             updateCamera()
         }
 
@@ -201,8 +203,6 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
                     die()
             }
         }
-
-        println(time)
 
         if (menu) {
             val restart = menuRenderer.renderScore(score.toInt(), highscore)
