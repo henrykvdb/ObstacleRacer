@@ -2,7 +2,6 @@ package com.obstacleracer
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputAdapter
-import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.Vector2
@@ -29,7 +28,7 @@ class Joystick : InputAdapter(), Disposable {
 
     fun render() {
         //enable transparency rendering
-        Gdx.graphics.gL20.glEnable(GL20.GL_BLEND)
+        /*Gdx.graphics.gL20.glEnable(GL20.GL_BLEND)
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)
 
         shapeRenderer.setColor(0.9f, 0.9f, 0.9f, 0.3f)
@@ -43,7 +42,7 @@ class Joystick : InputAdapter(), Disposable {
 
         shapeRenderer.end()
 
-        Gdx.graphics.gL20.glDisable(GL20.GL_BLEND)
+        Gdx.graphics.gL20.glDisable(GL20.GL_BLEND)*/
     }
 
     fun controlInput(): Vector2 {

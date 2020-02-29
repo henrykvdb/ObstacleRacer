@@ -32,7 +32,7 @@ const val GATE_DEPTH = 0.1f
 
 const val GATE_BASE_SPEED = 4f
 const val GATE_ACCELERATION = 0.10f
-const val GATE_SPEED_EXP = 0.8f
+const val GATE_SPEED_EXP = 0.6f
 
 const val GATE_REVERSE_BASE_SPEED = -2f
 const val BOUNCE_DISTANCE = GATE_DISTANCE / 2
@@ -208,7 +208,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
             val restart = menuRenderer.renderScore(score.toInt(), highscore)
             if (restart) restart()
         } else {
-            score = SCORE_FACTOR * time
+            score += Gdx.graphics.deltaTime * speed
             textRenderer.renderc("${score.toInt()}", Gdx.graphics.width / 2f, textRenderer.height / 2f)
         }
     }
