@@ -20,6 +20,6 @@
     <string name="admob_ad_id">ca-app-pub-6464324284979557/1243314542</string>
     <string name="admob_publisher_id">pub-6464324284979557</string>
     <string name="leaderboard_id">CgkIyOWB2csHEAIQAA</string>
-    <string name="google_app_id">260837503688</string>
+    <string name="gms_games_app_id">260837503688</string>
 
 </resources>

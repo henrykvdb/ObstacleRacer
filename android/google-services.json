@@ -1,0 +1,41 @@
+{
+  "project_info": {
+    "project_number": "913927797162",
+    "firebase_url": "https://obstacle-racer.firebaseio.com",
+    "project_id": "obstacle-racer",
+    "storage_bucket": "obstacle-racer.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:913927797162:android:1ea8999477baf4665313d3",
+        "android_client_info": {
+          "package_name": "com.obstacleracer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "913927797162-au7danh9opgf090if1lhlfm8eu7b7b2k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwAB7FJmaWFFowi0K1sVbfG23Jv7YQtGs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "913927797162-au7danh9opgf090if1lhlfm8eu7b7b2k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      },
+      "admob_app_id": "ca-app-pub-6464324284979557~3281965159"
+    }
+  ],
+  "configuration_version": "1"
+}

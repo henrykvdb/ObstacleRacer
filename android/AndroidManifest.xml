@@ -26,7 +26,7 @@
         </activity>
 
         <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-6464324284979557~3281965159" />
-        <meta-data android:name="com.google.android.gms.games.APP_ID" android:value="@string/google_app_id" />
+        <meta-data android:name="com.google.android.gms.games.APP_ID" android:value="@string/gms_games_app_id" />
         <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
     </application>
 
