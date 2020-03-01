@@ -42,6 +42,8 @@ const val GATE_ROT_SPEED_EXP = 0.5f
 const val COLOR_MIN_BRIGHTNESS = 0.4f
 const val COLOR_MIN_DISTANCE = 90f
 
+const val LINE_COUNT = 8
+
 const val CAMERA_FRICTION = 0.8f
 
 class Ring(val color: Color, val type: Int, val rotSpeed: Float, var rot: Float, var z: Float)
@@ -55,7 +57,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
         near = 0f
     }
 
-    private val renderer = ShapeRenderer().disposable()
+    private val shapeRenderer = ShapeRenderer().disposable()
     private val modelBatch = ModelBatch { camera, renderables ->
         val default = DefaultRenderableSorter()
         default.sort(camera, renderables)
@@ -140,14 +142,33 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
 
         //Lines
         Gdx.gl.glLineWidth(5f)
-        val elapsedTime = TimeUtils.timeSinceMillis(startTime)
-        renderer.begin(ShapeRenderer.ShapeType.Line)
-        renderer.color = Color.CYAN
-        for (i in 0 until 8) {
-            val vec = Vector3.X.cpy().rotate(Vector3.Z, 360f / 8 * i + elapsedTime / 40)
-            renderer.line(vec + Vector3.Z, vec - DEPTH * Vector3.Z)
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
+        shapeRenderer.color = Color.CYAN
+
+        val colorBits = shapeRenderer.color.toFloatBits()
+
+        for (i in 0 until LINE_COUNT) {
+            val angle = 360f / LINE_COUNT * i + time * 25
+            val vec1 = Vector2.X.cpy().rotate(angle + 1.5f)
+            val vec2 = Vector2.X.cpy().rotate(angle - 1.5f)
+
+            shapeRenderer.renderer.apply {
+                color(colorBits)
+                vertex(vec2.x, vec2.y, 0f)
+                color(colorBits)
+                vertex(vec1.x, vec1.y, 0f)
+                color(colorBits)
+                vertex(vec2.x, vec2.y, -DEPTH)
+
+                color(colorBits)
+                vertex(vec1.x, vec1.y, 0f)
+                color(colorBits)
+                vertex(vec1.x, vec1.y, -DEPTH)
+                color(colorBits)
+                vertex(vec2.x, vec2.y, -DEPTH)
+            }
         }
-        renderer.end()
+        shapeRenderer.end()
 
         //Rings
         modelBatch.begin(cam)
@@ -260,7 +281,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
     private fun updateCamera() {
         cam.update()
 
-        renderer.projectionMatrix = cam.combined
+        shapeRenderer.projectionMatrix = cam.combined
     }
 
     private fun <T : Disposable> T.disposable() = this.also { disposables += it }
