@@ -3,7 +3,6 @@ package com.obstacleracer
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputAdapter
 import com.badlogic.gdx.graphics.OrthographicCamera
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Disposable
@@ -15,7 +14,7 @@ const val JOYSTICK_SIZE = 1 / 6f
 
 class Joystick : InputAdapter(), Disposable {
     private val camera = OrthographicCamera(0f, 0f)
-    private val shapeRenderer = ShapeRenderer()
+    //private val shapeRenderer = ShapeRenderer()
 
     private var size: Float = 0f
 
@@ -58,8 +57,8 @@ class Joystick : InputAdapter(), Disposable {
         camera.setToOrtho(false, width.toFloat(), height.toFloat())
         camera.update()
 
-        shapeRenderer.projectionMatrix.set(camera.combined)
-        shapeRenderer.updateMatrices()
+        //shapeRenderer.projectionMatrix.set(camera.combined)
+        //shapeRenderer.updateMatrices()
     }
 
     override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
@@ -94,6 +93,6 @@ class Joystick : InputAdapter(), Disposable {
     }
 
     override fun dispose() {
-        shapeRenderer.dispose()
+        //shapeRenderer.dispose()
     }
 }

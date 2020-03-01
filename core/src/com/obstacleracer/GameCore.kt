@@ -19,9 +19,10 @@ import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Disposable
 import com.badlogic.gdx.utils.TimeUtils
 import java.util.*
-import kotlin.math.*
-
-const val SCORE_FACTOR = 3f
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 const val DEPTH = 20f
 const val GATE_DISTANCE = 3f
@@ -64,9 +65,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
         renderables.reverse()
     }.disposable()
 
-    private val textRenderer = TextRenderer((min(Gdx.graphics.width, Gdx.graphics.height) * 0.1).roundToInt()).disposable()
-    private val fpsRenderer = TextRenderer((min(Gdx.graphics.width, Gdx.graphics.height) * 0.03).roundToInt()).disposable()
-    private val menuRenderer = MenuRenderer(handler).disposable()
+    private val overlayRenderer = OverlayRenderer(handler).disposable()
 
     private val models: List<Model>
     private val collisionMeshes: List<CollisionMesh>
@@ -186,13 +185,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
         })
         modelBatch.end()
 
-        //fps
-        val fps = Gdx.graphics.framesPerSecond
-        fpsRenderer.renderc("$fps fps", Gdx.graphics.width / 2f, Gdx.graphics.height - textRenderer.height / 2f)
-
-        if (!menu) {
-            joystick.render()
-        }
+        //if (!menu) joystick.render()
 
         //World update
         time += Gdx.graphics.deltaTime
@@ -224,11 +217,11 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
         println(time)
 
         if (menu) {
-            val restart = menuRenderer.renderScore(score.toInt(), highscore)
+            val restart = overlayRenderer.renderMenuOverlay(score.toInt(), highscore)
             if (restart) restart()
         } else {
             score += Gdx.graphics.deltaTime * speed
-            textRenderer.renderc("${score.toInt()}", Gdx.graphics.width / 2f, textRenderer.height / 2f)
+			overlayRenderer.renderGameOverlay(score.toInt())
         }
     }
 
@@ -267,9 +260,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
     }
 
     fun resize(width: Int, height: Int) {
-        textRenderer.resize(width, height)
-        fpsRenderer.resize(width, height)
-        menuRenderer.resize(width, height)
+        overlayRenderer.resize(width, height)
 
         cam.viewportWidth = width.toFloat()
         cam.viewportHeight = height.toFloat()

@@ -13,8 +13,8 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 
-class MenuRenderer(private val handler: GameHandler) : Disposable {
-    val minDim = min(Gdx.graphics.width, Gdx.graphics.height)
+class OverlayRenderer(private val handler: GameHandler) : Disposable {
+    private val minDim = min(Gdx.graphics.width, Gdx.graphics.height)
 
     private var shapeRenderer: ShapeRenderer = ShapeRenderer()
     private var batch: SpriteBatch = SpriteBatch()
@@ -36,7 +36,18 @@ class MenuRenderer(private val handler: GameHandler) : Disposable {
         batch.projectionMatrix = cam.combined
     }
 
-    fun renderScore(score: Int, highscore: Int): Boolean {
+	fun renderGameOverlay(score: Int){
+		textRenderer.renderc("$score", Gdx.graphics.width / 2f, textRenderer.height / 2f)
+		shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
+		val size = minDim*0.005f
+		shapeRenderer.color = Color.WHITE
+		shapeRenderer.circle(Gdx.graphics.width / 2f,Gdx.graphics.height / 2f, size + (size / 2f).coerceAtLeast(1f))
+		shapeRenderer.color = Color.CYAN
+		shapeRenderer.circle(Gdx.graphics.width / 2f,Gdx.graphics.height / 2f,size)
+		shapeRenderer.end()
+	}
+
+    fun renderMenuOverlay(score: Int, highscore: Int): Boolean {
         //Rectangle
         val minDim = min(Gdx.graphics.width, Gdx.graphics.height)
         val wSize = minDim * 0.8f
