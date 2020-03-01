@@ -3,8 +3,8 @@
 
     <string name="rate_message">If you enjoy using Obstacle Racer, please take a moment to rate it. Thanks for your support!</string>
     <string name="libgdx_credit"><a href="https://www.github.com/libgdx/libgdx/blob/master/LICENSE">LibGdx</a>\n<a href="https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt">Kotlin</a></string>
-    <string name="credits_1">Henryk Van der Bruggen (Coding)</string>
-    <string name="credits_2">Karel Peeters (Coding)</string>
+    <string name="credits_1">Henryk Van der Bruggen (Dev)</string>
+    <string name="credits_2">Karel Peeters (Dev)</string>
     <string name="credits_3">Eric Matyas (Music)</string>
     <string name="edit_consent">edit consent</string>
     <string name="app_name">Obstacle Racer</string>
