@@ -57,7 +57,7 @@ class AndroidLauncher : AndroidApplication() {
                 createAboutDialog()
             }
 
-            override fun submitScore(score: Int) {
+            override fun submitScore(score: Int) = runOnUiThread {
                 val prefs = getSharedPreferences(SHARED_PREF, 0)
 
                 if (score > prefs.getInt(SHARED_PREF_HIGHSCORE, 0)) {
