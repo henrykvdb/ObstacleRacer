@@ -217,8 +217,6 @@ class DropperCore(files: FileHandle, private val handler: GameHandler, var inver
             }
         }
 
-        println(time)
-
         if (menu) {
             val restart = overlayRenderer.renderMenuOverlay(score.toInt(), highscore)
             if (restart) restart()
