@@ -49,7 +49,7 @@ const val CAMERA_FRICTION = 0.8f
 
 class Ring(val color: Color, val type: Int, val rotSpeed: Float, var rot: Float, var z: Float)
 
-class DropperCore(files: FileHandle, private val handler: GameHandler) {
+class DropperCore(files: FileHandle, private val handler: GameHandler, var inverted: Boolean) {
     private val disposables = mutableListOf<Disposable>()
 
     private val cam = PerspectiveCamera(90f, 0f, 0f).apply {
@@ -126,6 +126,9 @@ class DropperCore(files: FileHandle, private val handler: GameHandler) {
 
             //never go exactly to the edge, both rendering and collision would break
             input /= 1.05f
+
+            if (inverted)
+                input*=-1f
 
             cam.position.xy = (1 - CAMERA_FRICTION) * input + CAMERA_FRICTION * cam.position.xy
             updateCamera()

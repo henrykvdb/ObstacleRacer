@@ -23,7 +23,7 @@ class OverlayRenderer(private val handler: GameHandler) : Disposable {
     private var cam = OrthographicCamera(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
 
     private val btnLeaderboard = Texture(Gdx.files.internal("buttons/leaderboard.png"))
-    private val btnAbout = Texture(Gdx.files.internal("buttons/about.png"))
+    private val btnAbout = Texture(Gdx.files.internal("buttons/settings.png"))
     private val btnRate = Texture(Gdx.files.internal("buttons/rate.png"))
 
     fun resize(screenWidth: Int, screenHeight: Int) {
@@ -96,7 +96,7 @@ class OverlayRenderer(private val handler: GameHandler) : Disposable {
         //Handle input
         if (Gdx.input.justTouched()) {
             val r = size / 2
-            val about = Circle(wStart + edgePad + r, height + r, r)
+            val settings = Circle(wStart + edgePad + r, height + r, r)
             val rate = Circle((Gdx.graphics.width - size) / 2 + r, height + r, r)
             val leaderboard = Circle(wSize + wStart - size - edgePad + r, height + r, r)
 
@@ -104,7 +104,7 @@ class OverlayRenderer(private val handler: GameHandler) : Disposable {
             val inY = Gdx.graphics.height - Gdx.input.y.toFloat()
 
             when {
-                about.contains(inX, inY) -> handler.showAboutDialog()
+                settings.contains(inX, inY) -> handler.showSettingsDialog()
                 rate.contains(inX, inY) -> handler.showRateDialog()
                 leaderboard.contains(inX, inY) -> handler.showLeaderboard()
                 else -> return true

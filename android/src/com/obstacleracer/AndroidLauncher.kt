@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.View
+import android.widget.Switch
 import android.widget.TextView
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.backends.android.AndroidApplication
@@ -31,16 +32,16 @@ private const val RC_LEADERBOARD_UI = 9004
 private const val RC_SIGN_IN = 9005
 const val SHARED_PREF = "OBSTACLEDODGE"
 private const val SHARED_PREF_HIGHSCORE = "HIGHSCORE"
+private const val SHARED_PREF_INVERT = "INVERT"
 
 class AndroidLauncher : AndroidApplication() {
+    var adapter: GameAdapter? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         updateConsent()
 
-        val config = AndroidApplicationConfiguration()
-        config.numSamples = 5
-
-        initialize(GameAdapter({ Gdx.files.internal("") }, object : GameHandler {
+        adapter = GameAdapter({ Gdx.files.internal("") }, object : GameHandler {
             override fun showLeaderboard() {
                 runPlayAction(object : PlayAction {
                     override fun doAction(account: GoogleSignInAccount) = runOnUiThread {
@@ -53,8 +54,8 @@ class AndroidLauncher : AndroidApplication() {
                 createRateDialog()
             }
 
-            override fun showAboutDialog() = runOnUiThread {
-                createAboutDialog()
+            override fun showSettingsDialog() = runOnUiThread {
+                createSettingsDialog()
             }
 
             override fun submitScore(score: Int) = runOnUiThread {
@@ -80,14 +81,18 @@ class AndroidLauncher : AndroidApplication() {
                 val prefs = getSharedPreferences(SHARED_PREF, 0)
                 return prefs.getInt(SHARED_PREF_HIGHSCORE, 0)
             }
-        }), config)
+        }, getSharedPreferences(SHARED_PREF, 0).getBoolean(SHARED_PREF_INVERT, false))
+
+        val config = AndroidApplicationConfiguration()
+        config.numSamples = 5
+        initialize(adapter, config)
 
         if (rateCondition())
             createRateDialog()
     }
 
-    fun createAboutDialog() {
-        val layout = View.inflate(this, R.layout.dialog_body_about, null)
+    fun createSettingsDialog() {
+        val layout = View.inflate(this, R.layout.dialog_body_settings, null)
         (layout.findViewById<View>(R.id.versionName_view) as TextView).text = try {
             resources.getText(R.string.app_name).toString() + "\n" + getString(R.string.version) + " " +
                     packageManager.getPackageInfo(packageName, 0).versionName
@@ -96,8 +101,17 @@ class AndroidLauncher : AndroidApplication() {
         }
 
         //Update links
-        val textView = layout.findViewById<TextView>(R.id.license_view)
+        val textView = layout.findViewById<TextView>(R.id.credit_view)
         textView.movementMethod = LinkMovementMethod.getInstance()
+
+        val switch = layout.findViewById<Switch>(R.id.invert_switch)
+        switch.setTextColor(textView.textColors)
+        switch.isChecked = getSharedPreferences(SHARED_PREF, 0).getBoolean(SHARED_PREF_INVERT, false)
+        switch.setOnCheckedChangeListener { _, requestInverted ->
+            val editor = getSharedPreferences(SHARED_PREF, 0).edit()
+            editor.putBoolean(SHARED_PREF_INVERT, requestInverted).apply()
+            adapter?.setInverted(requestInverted)
+        }
 
         keepDialog(AlertDialog.Builder(this).setView(layout)
                 .setPositiveButton(getString(R.string.close), null)

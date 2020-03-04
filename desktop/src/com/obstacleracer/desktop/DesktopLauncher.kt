@@ -24,7 +24,7 @@ fun main() {
             println("Request: show rate dialog")
         }
 
-        override fun showAboutDialog() {
+        override fun showSettingsDialog() {
             println("Request: show about dialog")
         }
 
