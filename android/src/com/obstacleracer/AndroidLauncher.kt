@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Switch
 import android.widget.TextView
+import android.widget.Toast
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.backends.android.AndroidApplication
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration
@@ -166,6 +167,10 @@ class AndroidLauncher : AndroidApplication() {
             val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
             if (result.isSuccess) {
                 action?.doAction(result.signInAccount!!)
+            }
+            else{
+                Toast.makeText(this,"sign in error ${result.status.statusCode}: ${result.status.statusMessage}"
+                        ,Toast.LENGTH_LONG).show()
             }
         }
     }
