@@ -68,8 +68,7 @@ class AndroidLauncher : AndroidApplication() {
                     editor.apply()
                 }
 
-                if (!BuildConfig.DEBUG)
-                    createAd()
+                createAd()
 
                 runPlayAction(object : PlayAction {
                     override fun doAction(account: GoogleSignInAccount) = runOnUiThread {
@@ -176,8 +175,6 @@ class AndroidLauncher : AndroidApplication() {
     }
 
     fun createAd() {
-        return
-
         MobileAds.setRequestConfiguration(MobileAds.getRequestConfiguration().toBuilder()
                 .setMaxAdContentRating(MAX_AD_CONTENT_RATING_T)
                 .setTagForUnderAgeOfConsent(TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE).build())
@@ -207,8 +204,6 @@ class AndroidLauncher : AndroidApplication() {
 
     var consent = false
     private fun updateConsent() {
-        return
-
         val consentInformation = ConsentInformation.getInstance(this)
         val publisherIds = arrayOf(getString(R.string.admob_publisher_id))
         consentInformation.requestConsentInfoUpdate(publisherIds, object : ConsentInfoUpdateListener {
