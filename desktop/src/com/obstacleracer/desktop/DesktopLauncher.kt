@@ -3,7 +3,6 @@ package com.obstacleracer.desktop
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration
-import com.obstacleracer.Basic3DTest
 import com.obstacleracer.GameAdapter
 import com.obstacleracer.GameHandler
 
