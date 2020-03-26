@@ -11,7 +11,6 @@ import com.badlogic.gdx.graphics.g3d.Model
 import com.badlogic.gdx.graphics.g3d.ModelBatch
 import com.badlogic.gdx.graphics.g3d.ModelInstance
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute
-import com.badlogic.gdx.graphics.g3d.utils.DefaultRenderableSorter
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.Matrix4
 import com.badlogic.gdx.math.Vector2
@@ -55,15 +54,11 @@ class DropperCore(files: FileHandle, private val handler: GameHandler, var inver
     private val cam = PerspectiveCamera(90f, 0f, 0f).apply {
         position.set(0f, 0f, 0f)
         lookAt(0f, 0f, -1f)
-        near = 0f
+        near = 0.01f
     }
 
     private val shapeRenderer = ShapeRenderer().disposable()
-    private val modelBatch = ModelBatch { camera, renderables ->
-        val default = DefaultRenderableSorter()
-        default.sort(camera, renderables)
-        renderables.reverse()
-    }.disposable()
+    private val modelBatch = ModelBatch().disposable()
 
     private val overlayRenderer = OverlayRenderer(handler).disposable()
 
@@ -136,6 +131,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler, var inver
 
         //Reset background
         Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f)
+        Gdx.gl.glClearDepthf(1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT or GL20.GL_DEPTH_BUFFER_BIT)
 
         //antialias
@@ -174,6 +170,9 @@ class DropperCore(files: FileHandle, private val handler: GameHandler, var inver
 
         //Rings
         modelBatch.begin(cam)
+        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST)
+        Gdx.gl.glDepthMask(true)
+
         modelBatch.render(gates.map { ring ->
             val transform = Matrix4()
                     .translate(0f, 0f, ring.z)
