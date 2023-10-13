@@ -1,6 +1,7 @@
 android {
-    buildToolsVersion "29.0.3"
-    compileSdkVersion 29
+    namespace "com.obstacleracer"
+    compileSdk 34
+
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
@@ -8,32 +9,52 @@ android {
             aidl.srcDirs = ['src']
             renderscript.srcDirs = ['src']
             res.srcDirs = ['res']
-            assets.srcDirs = ['assets']
+            assets.srcDirs = ['../assets']
             jniLibs.srcDirs = ['libs']
         }
 
     }
     packagingOptions {
-        exclude 'META-INF/robovm/ios/robovm.xml'
+        resources {
+            excludes += ['META-INF/robovm/ios/robovm.xml']
+        }
     }
     defaultConfig {
         applicationId "com.obstacleracer"
-        minSdkVersion 16
-        targetSdkVersion 29
+        minSdk 19
+        targetSdk 33
         versionCode 5
         versionName "1.3"
     }
+
     buildTypes {
         release {
+            debuggable = false
             minifyEnabled true
             shrinkResources true
-            debuggable false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            resValue 'string', 'admob_ad_id', '"ca-app-pub-6464324284979557/1243314542"'
         }
         debug {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            resValue 'string', 'admob_ad_id', '"ca-app-pub-3940256099942544/1033173712"'
         }
+    }
+
+    buildFeatures {
+        renderScript true
+        aidl true
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    kotlin {
+        jvmToolchain(17)
     }
 }
 
@@ -41,22 +62,20 @@ android {
 // called every time gradle gets executed, takes the native dependencies of
 // the natives configuration, and extracts them to the proper libs/ folders
 // so they get packed with the APK.
-task copyAndroidNatives {
+tasks.register('copyAndroidNatives') {
     doFirst {
-        file("libs/armeabi/").mkdirs()
         file("libs/armeabi-v7a/").mkdirs()
         file("libs/arm64-v8a/").mkdirs()
         file("libs/x86_64/").mkdirs()
         file("libs/x86/").mkdirs()
 
-        configurations.natives.files.each { jar ->
+        configurations.natives.copy().files.each { jar ->
             def outputDir = null
             if (jar.name.endsWith("natives-arm64-v8a.jar")) outputDir = file("libs/arm64-v8a")
             if (jar.name.endsWith("natives-armeabi-v7a.jar")) outputDir = file("libs/armeabi-v7a")
-            if(jar.name.endsWith("natives-armeabi.jar")) outputDir = file("libs/armeabi")
-            if(jar.name.endsWith("natives-x86_64.jar")) outputDir = file("libs/x86_64")
-            if(jar.name.endsWith("natives-x86.jar")) outputDir = file("libs/x86")
-            if(outputDir != null) {
+            if (jar.name.endsWith("natives-x86_64.jar")) outputDir = file("libs/x86_64")
+            if (jar.name.endsWith("natives-x86.jar")) outputDir = file("libs/x86")
+            if (outputDir != null) {
                 copy {
                     from zipTree(jar)
                     into outputDir
@@ -67,13 +86,11 @@ task copyAndroidNatives {
     }
 }
 
-tasks.whenTaskAdded { packageTask ->
-    if (packageTask.name.contains("package")) {
-        packageTask.dependsOn 'copyAndroidNatives'
-    }
+tasks.matching { it.name.contains("merge") && it.name.contains("JniLibFolders") }.configureEach { packageTask ->
+    packageTask.dependsOn 'copyAndroidNatives'
 }
 
-task run(type: Exec) {
+tasks.register('run', Exec) {
     def path
     def localProperties = project.file("../local.properties")
     if (localProperties.exists()) {
@@ -92,5 +109,7 @@ task run(type: Exec) {
     }
 
     def adb = path + "/platform-tools/adb"
-    commandLine "$adb", 'shell', 'am', 'start', '-n', 'com.obstacleracer.AndroidLauncher'
+    commandLine "$adb", 'shell', 'am', 'start', '-n', 'com.obstacleracer/com.obstacleracer.AndroidLauncher'
 }
+
+eclipse.project.name = appName + "-android"

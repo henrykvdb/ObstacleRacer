@@ -17,7 +17,7 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Disposable
 import com.badlogic.gdx.utils.TimeUtils
-import java.util.*
+import java.util.Random
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -90,7 +90,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler, var inver
 
         manager.finishLoading()
 
-        models = modelFiles.map { manager.get<Model>(it.path()) }
+        models = modelFiles.map { manager.get(it.path()) }
         collisionMeshes = models.map { CollisionMesh(it) }
 
         val music = manager.get<Music>("music.mp3")
@@ -147,8 +147,8 @@ class DropperCore(files: FileHandle, private val handler: GameHandler, var inver
 
         for (i in 0 until LINE_COUNT) {
             val angle = 360f / LINE_COUNT * i + time * 25
-            val vec1 = Vector2.X.cpy().rotate(angle + 1.5f)
-            val vec2 = Vector2.X.cpy().rotate(angle - 1.5f)
+            val vec1 = Vector2.X.cpy().rotateDeg(angle + 1.5f)
+            val vec2 = Vector2.X.cpy().rotateDeg(angle - 1.5f)
 
             shapeRenderer.renderer.apply {
                 color(colorBits)
@@ -192,7 +192,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler, var inver
         //World update
         time += Gdx.graphics.deltaTime
 
-        if (gates.isEmpty() || gates.last.z > -DEPTH + GATE_DISTANCE)
+        if (gates.isEmpty() || gates.last().z > -DEPTH + GATE_DISTANCE)
             spawnRing()
 
         val speed = if (menu) {
@@ -242,11 +242,11 @@ class DropperCore(files: FileHandle, private val handler: GameHandler, var inver
 
     private fun spawnRing() {
         val color = Color().apply {
-            val prevHue = gates.lastOrNull()?.color?.hue ?: random.nextFloat(0f, 360f)
-            val hue = prevHue + random.nextFloat(COLOR_MIN_DISTANCE, 360f - COLOR_MIN_DISTANCE)
+            val prevHue = gates.lastOrNull()?.color?.hue ?: random.nextFloatB(0f, 360f)
+            val hue = prevHue + random.nextFloatB(COLOR_MIN_DISTANCE, 360f - COLOR_MIN_DISTANCE)
 
             val saturation = sqrt(random.nextFloat()) //uniform sampling of hsv cylinder
-            val value = random.nextFloat(COLOR_MIN_BRIGHTNESS, 1f)
+            val value = random.nextFloatB(COLOR_MIN_BRIGHTNESS, 1f)
 
             fromHsv(hue, saturation, value)
         }
@@ -255,7 +255,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler, var inver
 
         val rotSpeedDeviation = GATE_ROT_SPEED * max(0f, time - GATE_ROT_START_TIME).pow(GATE_ROT_SPEED_EXP)
         val rotSpeed = random.nextGaussian().toFloat() * rotSpeedDeviation
-        val rot = random.nextFloat(0f, 360f)
+        val rot = random.nextFloatB(0f, 360f)
         gates.add(Ring(color, type, rotSpeed, rot, -DEPTH))
     }
 

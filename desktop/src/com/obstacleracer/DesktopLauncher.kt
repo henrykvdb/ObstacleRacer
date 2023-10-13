@@ -1,21 +1,19 @@
-package com.obstacleracer.desktop
+package com.obstacleracer
 
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.backends.lwjgl.LwjglApplication
-import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration
-import com.obstacleracer.GameAdapter
-import com.obstacleracer.GameHandler
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration
 
 var highScore = 0
 
 fun main() {
-    val config = LwjglApplicationConfiguration()
-    config.width = 450
-    config.height = 800
-    config.title = "Dropper"
-    config.samples = 5
+    val config = Lwjgl3ApplicationConfiguration()
+    config.setTitle("Dropper")
 
-    LwjglApplication(GameAdapter({ Gdx.files.local("") }, object : GameHandler {
+    // Enable AA, all default values except samples
+    config.setBackBufferConfig(8,8,8,8,16,0, 5)
+
+    Lwjgl3Application(GameAdapter({ Gdx.files.local("assets/") }, object : GameHandler {
         override fun showLeaderboard() {
             println("Request: show leaderboard")
         }

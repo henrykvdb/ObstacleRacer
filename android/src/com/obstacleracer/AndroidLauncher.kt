@@ -13,20 +13,22 @@ import android.widget.Toast
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.backends.android.AndroidApplication
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration
-import com.google.ads.consent.*
-import com.google.ads.mediation.admob.AdMobAdapter
-import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.InterstitialAd
+import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_T
 import com.google.android.gms.ads.RequestConfiguration.TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE
+import com.google.android.gms.ads.admanager.AdManagerInterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.games.Games
-import java.net.URL
+import com.google.android.ump.ConsentInformation
+import com.google.android.ump.ConsentRequestParameters
+import com.google.android.ump.UserMessagingPlatform
 
 
 private const val RC_LEADERBOARD_UI = 9004
@@ -36,11 +38,14 @@ private const val SHARED_PREF_HIGHSCORE = "HIGHSCORE"
 private const val SHARED_PREF_INVERT = "INVERT"
 
 class AndroidLauncher : AndroidApplication() {
-    var adapter: GameAdapter? = null
+    private var adapter: GameAdapter? = null
+    private lateinit var consentInformation: ConsentInformation
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        updateConsent()
+
+        consentInformation = UserMessagingPlatform.getConsentInformation(this)
+        requestConsent {}
 
         adapter = GameAdapter({ Gdx.files.internal("") }, object : GameHandler {
             override fun showLeaderboard() {
@@ -68,7 +73,7 @@ class AndroidLauncher : AndroidApplication() {
                     editor.apply()
                 }
 
-                createAd()
+                showAdChecked()
 
                 runPlayAction(object : PlayAction {
                     override fun doAction(account: GoogleSignInAccount) = runOnUiThread {
@@ -115,7 +120,7 @@ class AndroidLauncher : AndroidApplication() {
 
         keepDialog(AlertDialog.Builder(this).setView(layout)
                 .setPositiveButton(getString(R.string.close), null)
-                .setNegativeButton(getString(R.string.edit_consent)) { _, _ -> requestConsentFromUser() }.show())
+                .setNegativeButton(getString(R.string.edit_consent)) { _, _ -> TODO() }.show()) // TODO
 
     }
 
@@ -160,93 +165,57 @@ class AndroidLauncher : AndroidApplication() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == RC_SIGN_IN) {
             val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
-            if (result.isSuccess) {
+
+            if (result == null) {
+                Toast.makeText(this,"sign in error", Toast.LENGTH_LONG).show()
+            } else if (result.isSuccess) {
                 action?.doAction(result.signInAccount!!)
-            }
-            else{
-                Toast.makeText(this,"sign in error ${result.status.statusCode}: ${result.status.statusMessage}"
-                        ,Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this,"sign in error ${result.status.statusCode}: " +
+						"${result.status.statusMessage}", Toast.LENGTH_LONG).show()
             }
         }
     }
 
-    fun createAd() {
+    private fun requestConsent(callback: () -> Unit){
+        val params = ConsentRequestParameters.Builder().build()
+        consentInformation.requestConsentInfoUpdate(this, params, {
+            UserMessagingPlatform.loadAndShowConsentFormIfRequired(this) { formError ->
+                if (formError != null) { // Consent not obtained in current session.
+                    Log.e("CONSENT", "Error ${formError.errorCode}: ${formError.message}")
+                } else if (consentInformation.canRequestAds()){
+                    callback()
+                }
+            }
+        }, { Log.e("CONSENT", "Error ${it.errorCode}: ${it.message}") })
+    }
+
+    private fun showAdChecked(){
+        if (consentInformation.canRequestAds()) showAd()
+        else requestConsent { showAd() }
+    }
+
+    private fun showAd() {
         MobileAds.setRequestConfiguration(MobileAds.getRequestConfiguration().toBuilder()
-                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_T)
-                .setTagForUnderAgeOfConsent(TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE).build())
+            .setMaxAdContentRating(MAX_AD_CONTENT_RATING_T)
+            .setTagForUnderAgeOfConsent(TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE).build())
         MobileAds.initialize(this)
 
-        InterstitialAd(this).apply {
-            adUnitId = getString(R.string.admob_ad_id)
+        val adRequest = AdRequest.Builder().build()
+        AdManagerInterstitialAd.load(this, getString(R.string.admob_ad_id), adRequest,
+            object : InterstitialAdLoadCallback() {
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    Log.e("ADMOB", "Ad failed to load (code $adError)")
+                }
 
-            //GDPR bitch
-            Log.e("ADMOB", "Loading ad consent: $consent")
-            val builder = AdRequest.Builder()
-            if (!consent) {
-                val extras = Bundle()
-                extras.putString("npa", "1")
-                builder.addNetworkExtrasBundle(AdMobAdapter::class.java, extras)
-            }
-            loadAd(builder.build())
-
-            adListener = object : AdListener() {
-                override fun onAdLoaded() = show()
-                override fun onAdFailedToLoad(p0: Int) {
-                    Log.e("ADMOB", "Ad failed to load (code $p0)")
+                override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                    interstitialAd.show(this@AndroidLauncher)
                 }
             }
-        }
-    }
-
-    var consent = false
-    private fun updateConsent() {
-        val consentInformation = ConsentInformation.getInstance(this)
-        val publisherIds = arrayOf(getString(R.string.admob_publisher_id))
-        consentInformation.requestConsentInfoUpdate(publisherIds, object : ConsentInfoUpdateListener {
-            override fun onFailedToUpdateConsentInfo(reason: String?) {
-                consent = false
-            }
-
-            override fun onConsentInfoUpdated(consentStatus: ConsentStatus?) {
-                when (consentStatus) {
-                    ConsentStatus.PERSONALIZED -> consent = true
-                    ConsentStatus.NON_PERSONALIZED -> consent = false
-                    ConsentStatus.UNKNOWN -> {
-                        if (consentInformation.isRequestLocationInEeaOrUnknown) {
-                            requestConsentFromUser()
-                        } else consent = true
-                    }
-                }
-            }
-        })
-    }
-
-    var consentForm: ConsentForm? = null
-    fun requestConsentFromUser() {
-        val privacyUrl = URL(getString(R.string.privacy_policy_url))
-        consentForm = ConsentForm.Builder(context, privacyUrl)
-                .withListener(object : ConsentFormListener() {
-                    override fun onConsentFormLoaded() {
-                        consentForm?.show()
-                    }
-
-                    override fun onConsentFormOpened() {}
-
-                    override fun onConsentFormClosed(consentStatus: ConsentStatus, userPrefersAdFree: Boolean?) {
-                        if (consentStatus == ConsentStatus.PERSONALIZED) {
-                            consent = true
-                            ConsentInformation.getInstance(context).consentStatus = ConsentStatus.PERSONALIZED
-                        } else consent = false
-                    }
-
-                    override fun onConsentFormError(errorDescription: String?) {
-                        consent = false
-                    }
-                }).withPersonalizedAdsOption().withNonPersonalizedAdsOption().build()
-        consentForm?.load()
+        )
     }
 }

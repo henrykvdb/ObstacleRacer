@@ -44,4 +44,4 @@ val Color.hue: Float
         return arr[0]
     }
 
-fun Random.nextFloat(min: Float, max: Float): Float = nextFloat() * (max - min) + min
+fun Random.nextFloatB(min: Float, max: Float): Float = nextFloat() * (max - min) + min
