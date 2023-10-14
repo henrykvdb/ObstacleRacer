@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/dialog_about_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -13,21 +14,21 @@
         android:id="@+id/versionName_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:drawableStart="@drawable/ic_launcher"
-        android:drawableLeft="@drawable/ic_launcher"
+        app:drawableStartCompat="@drawable/ic_launcher"
+        app:drawableLeftCompat="@drawable/ic_launcher"
         android:gravity="center_vertical"
         android:paddingTop="@dimen/nav_header_vertical_spacing"
         android:paddingBottom="6dp"
         android:text="@string/app_name"
         android:textSize="20sp"
-        android:textStyle="normal|bold" />
+        android:textStyle="normal|bold"/>
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <Switch
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/invert_switch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

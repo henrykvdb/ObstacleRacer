@@ -1,15 +1,13 @@
 package com.obstacleracer
 
-import android.app.AlertDialog
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.View
-import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.widget.SwitchCompat
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.backends.android.AndroidApplication
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration
@@ -21,11 +19,9 @@ import com.google.android.gms.ads.RequestConfiguration.TAG_FOR_UNDER_AGE_OF_CONS
 import com.google.android.gms.ads.admanager.AdManagerInterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
-import com.google.android.gms.auth.api.Auth
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.games.Games
+import com.google.android.gms.games.PlayGames
+import com.google.android.gms.games.PlayGamesSdk
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
@@ -44,16 +40,17 @@ class AndroidLauncher : AndroidApplication() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        PlayGamesSdk.initialize(this)
+
         consentInformation = UserMessagingPlatform.getConsentInformation(this)
-        requestConsent {}
+        runWithConsent {}
 
         adapter = GameAdapter({ Gdx.files.internal("") }, object : GameHandler {
             override fun showLeaderboard() {
-                runPlayAction(object : PlayAction {
-                    override fun doAction(account: GoogleSignInAccount) = runOnUiThread {
-                        createLeaderboard(account)
-                    }
-                }, ask = true)
+                runWithPlaySignIn {
+                    submitLeaderboard(getHighscore().toLong())
+                    createLeaderboard()
+                }
             }
 
             override fun showRateDialog() = runOnUiThread {
@@ -66,7 +63,6 @@ class AndroidLauncher : AndroidApplication() {
 
             override fun submitScore(score: Int) = runOnUiThread {
                 val prefs = getSharedPreferences(SHARED_PREF, 0)
-
                 if (score > prefs.getInt(SHARED_PREF_HIGHSCORE, 0)) {
                     val editor = prefs.edit()
                     editor.putInt(SHARED_PREF_HIGHSCORE, score)
@@ -74,12 +70,7 @@ class AndroidLauncher : AndroidApplication() {
                 }
 
                 showAdChecked()
-
-                runPlayAction(object : PlayAction {
-                    override fun doAction(account: GoogleSignInAccount) = runOnUiThread {
-                        submitLeaderboard(account, score.toLong())
-                    }
-                }, ask = false)
+                submitLeaderboard(score.toLong())
             }
 
             override fun getHighscore(): Int {
@@ -109,7 +100,7 @@ class AndroidLauncher : AndroidApplication() {
         val textView = layout.findViewById<TextView>(R.id.credit_view)
         textView.movementMethod = LinkMovementMethod.getInstance()
 
-        val switch = layout.findViewById<Switch>(R.id.invert_switch)
+        val switch = layout.findViewById<SwitchCompat>(R.id.invert_switch)
         switch.setTextColor(textView.textColors)
         switch.isChecked = getSharedPreferences(SHARED_PREF, 0).getBoolean(SHARED_PREF_INVERT, false)
         switch.setOnCheckedChangeListener { _, requestInverted ->
@@ -118,70 +109,47 @@ class AndroidLauncher : AndroidApplication() {
             adapter?.setInverted(requestInverted)
         }
 
-        keepDialog(AlertDialog.Builder(this).setView(layout)
-                .setPositiveButton(getString(R.string.close), null)
-                .setNegativeButton(getString(R.string.edit_consent)) { _, _ -> TODO() }.show()) // TODO
+        MaterialAlertDialogBuilder(this, R.style.MaterialAlertDialog_Material3)
+            .setView(layout)
+            .setPositiveButton(getString(R.string.close), null)
+            .setNegativeButton(getString(R.string.edit_consent)) { _, _ ->
+                UserMessagingPlatform.showPrivacyOptionsForm(this) {}
+            }.show()
 
     }
 
-    fun submitLeaderboard(account: GoogleSignInAccount, score: Long) {
-        Games.getLeaderboardsClient(this, account)
+    private fun submitLeaderboard(score: Long) {
+        PlayGames.getLeaderboardsClient(this)
                 .submitScore(getString(R.string.leaderboard_id), score)
     }
 
-    private fun createLeaderboard(account: GoogleSignInAccount) {
-        Games.getLeaderboardsClient(this, account)
-                .getLeaderboardIntent(getString(R.string.leaderboard_id))
-                .addOnSuccessListener { intent ->
-                    startActivityForResult(intent, RC_LEADERBOARD_UI)
-                }
-    }
-
-    interface PlayAction {
-        fun doAction(account: GoogleSignInAccount)
-    }
-
-    private var action: PlayAction? = null
-    private fun runPlayAction(action: PlayAction, ask: Boolean) {
-        this.action = action
-        val signInOptions = GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN
-        val account = GoogleSignIn.getLastSignedInAccount(this)
-
-        // Already signed in.
-        if (GoogleSignIn.hasPermissions(account, *signInOptions.scopeArray)) {
-            action.doAction(account!!)
-        } else {
-            // Try Silent sign-in first.
-            GoogleSignIn.getClient(this, signInOptions).silentSignIn().addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    action.doAction(task.result!!)
-                } else if (ask) {
-                    // Try Sign in pop-up
-                    val intent = GoogleSignIn.getClient(this,
-                            GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN).signInIntent
-                    startActivityForResult(intent, RC_SIGN_IN)
-                }
+    private fun createLeaderboard() {
+        PlayGames.getLeaderboardsClient(this)
+            .getLeaderboardIntent(getString(R.string.leaderboard_id))
+            .addOnSuccessListener { intent ->
+                startActivityForResult(intent, RC_LEADERBOARD_UI)
             }
+    }
+
+    private fun runWithPlaySignIn(block: () -> Unit){
+        val signInClient = PlayGames.getGamesSignInClient(this)
+        signInClient.signIn().addOnCompleteListener { isAuthenticatedTask ->
+            val success = isAuthenticatedTask.isSuccessful
+            val result = isAuthenticatedTask.result
+
+            if (success && result.isAuthenticated)
+                block()
+            else Toast.makeText(this, "Google Play sign in error", Toast.LENGTH_SHORT).show()
+
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == RC_SIGN_IN) {
-            val result = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
-
-            if (result == null) {
-                Toast.makeText(this,"sign in error", Toast.LENGTH_LONG).show()
-            } else if (result.isSuccess) {
-                action?.doAction(result.signInAccount!!)
-            } else {
-                Toast.makeText(this,"sign in error ${result.status.statusCode}: " +
-						"${result.status.statusMessage}", Toast.LENGTH_LONG).show()
-            }
-        }
+    private fun showAdChecked(){
+        if (consentInformation.canRequestAds()) showAd()
+        else runWithConsent { showAd() }
     }
 
-    private fun requestConsent(callback: () -> Unit){
+    private fun runWithConsent(callback: () -> Unit){
         val params = ConsentRequestParameters.Builder().build()
         consentInformation.requestConsentInfoUpdate(this, params, {
             UserMessagingPlatform.loadAndShowConsentFormIfRequired(this) { formError ->
@@ -192,11 +160,6 @@ class AndroidLauncher : AndroidApplication() {
                 }
             }
         }, { Log.e("CONSENT", "Error ${it.errorCode}: ${it.message}") })
-    }
-
-    private fun showAdChecked(){
-        if (consentInformation.canRequestAds()) showAd()
-        else requestConsent { showAd() }
     }
 
     private fun showAd() {

@@ -1,12 +1,12 @@
 package com.obstacleracer
 
-import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.view.WindowManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 private const val SHARED_PREF_DONT_SHOW_AGAIN = "dontshowagain"
 private const val SHARED_PREF_DATE_FIRST_LAUNCH = "date_firstlaunch"
@@ -61,20 +61,11 @@ fun Context.createRateDialog() {
         }
     }
 
-    keepDialog(AlertDialog.Builder(this)
+    MaterialAlertDialogBuilder(this, R.style.MaterialAlertDialog_Material3)
             .setMessage(getString(R.string.rate_message))
             .setTitle(getString(R.string.rate_app))
             .setPositiveButton(getString(R.string.rate), dialogClickListener)
             .setNeutralButton(getString(R.string.later), dialogClickListener)
             .setNegativeButton(getString(R.string.no_thanks), dialogClickListener)
-            .show())
-}
-
-// Prevent dialog destroy when orientation changes
-fun keepDialog(dialog: AlertDialog) = dialog.apply {
-    dialog.window?.attributes = WindowManager.LayoutParams().apply {
-        copyFrom(dialog.window?.attributes)
-        width = WindowManager.LayoutParams.WRAP_CONTENT
-        height = WindowManager.LayoutParams.WRAP_CONTENT
-    }
+            .show()
 }

@@ -7,8 +7,7 @@
         Karel Peeters (Dev)\n
         Eric Matyas (Music)\n
         Lučka Žagar (Icon)\n
-        <a href="https://www.github.com/libgdx/libgdx/blob/master/LICENSE">LibGdx</a>
-        <a href="https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt">Kotlin</a>
+        <a href="https://www.github.com/libgdx/libgdx/blob/master/LICENSE">LibGDX framework</a>
     </string>
     <string name="edit_consent">edit consent</string>
     <string name="app_name">Obstacle Racer</string>

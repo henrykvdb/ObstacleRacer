@@ -221,7 +221,7 @@ class DropperCore(files: FileHandle, private val handler: GameHandler, var inver
             if (restart) restart()
         } else {
             score += Gdx.graphics.deltaTime * speed
-			overlayRenderer.renderGameOverlay(score.toInt())
+            overlayRenderer.renderGameOverlay(score.toInt())
         }
     }
 
