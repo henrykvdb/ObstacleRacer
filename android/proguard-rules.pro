@@ -24,15 +24,10 @@
 -dontwarn com.badlogic.gdx.backends.android.AndroidFragmentApplication
 
 # Required if using Gdx-Controllers extension
--keep class com.badlogic.gdx.controllers.android.AndroidControllers
+-keep public class com.badlogic.gdx.graphics.** { *; }
+-keep public class com.badlogic.gdx.backends.android.AndroidGraphics
 
-# Required if using Box2D extension
--keepclassmembers class com.badlogic.gdx.physics.box2d.World {
-   boolean contactFilter(long, long);
-   void    beginContact(long);
-   void    endContact(long);
-   void    preSolve(long, long);
-   void    postSolve(long, long);
-   boolean reportFixture(long);
-   float   reportRayFixture(long, float, float, float, float, float);
+-keepclassmembers class com.badlogic.gdx.backends.android.AndroidInput* {
+   <init>(com.badlogic.gdx.Application, android.content.Context, java.lang.Object, com.badlogic.gdx.backends.android.AndroidApplicationConfiguration);
 }
+
