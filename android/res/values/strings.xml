@@ -19,10 +19,10 @@
     <string name="close">close</string>
     <string name="rate">Rate</string>
 
-    <string name="privacy_policy_url">https://sites.google.com/view/obstacleracer</string>
-    <string name="admob_publisher_id">pub-6464324284979557</string>
-    <string name="leaderboard_id">CgkIyOWB2csHEAIQAA</string>
-    <string name="gms_games_app_id">260837503688</string>
+    <string name="privacy_policy_url" translatable="false">https://sites.google.com/view/obstacleracer</string>
+    <string name="admob_publisher_id" translatable="false">pub-6464324284979557</string>
+    <string name="leaderboard_id" translatable="false">CgkIyOWB2csHEAIQAA</string>
+    <string name="gms_games_app_id" translatable="false">260837503688</string>
     <string name="inverted_controls">Inverted Controls</string>
 
 </resources>
